@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM System - Startsida</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<div class="app-container" style="width: 1400px; height: 1000px; justify-content: center">
+    <h1 class="mb-4 text-center">Välkommen till CRM-systemet</h1>
+    <div class="btn-container">
+        <a href="/projects" class="btn btn-primary btn-large">Visa alla projekt</a>
+        <a href="/add-project" class="btn btn-success btn-large">Lägg till projekt</a>
+        <a href="/docs" class="btn btn-secondary btn-large">Bilagor</a>
+    </div>
+</div>
+</body>
+</html>

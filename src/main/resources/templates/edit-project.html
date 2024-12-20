@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Ändra Projekt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<div class="app-container" style="width: 1400px; height: 1000px; justify-content: center">
+    <div class="mb-4 text-center">
+        <h2>Ändra Projekt</h2>
+    </div>
+
+    <!-- Meddelanderuta -->
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <p th:text="${message}"></p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Formulär för att ändra projekt -->
+    <form th:action="@{/edit-project}" method="post" class="row g-3">
+        <input type="hidden" name="id" th:value="${project.id}">
+
+        <!-- Projektets namn -->
+        <div class="col-md-6">
+            <label for="name" class="form-label">Projektets namn</label>
+            <input type="text" id="name" name="name" class="form-control" th:value="${project.name}" required>
+        </div>
+
+        <!-- Ansvarig -->
+        <div class="col-md-6">
+            <label for="manager" class="form-label">Ansvarig</label>
+            <input type="text" id="manager" name="manager" class="form-control" th:value="${project.manager}" required>
+        </div>
+
+        <!-- Deadline -->
+        <div class="col-md-6">
+            <label for="deadline" class="form-label">Deadline</label>
+            <input type="date" id="deadline" name="deadline" class="form-control" th:value="${project.deadline}" required>
+        </div>
+
+        <!-- Startdatum -->
+        <div class="col-md-6">
+            <label for="startDate" class="form-label">Startdatum</label>
+            <input type="date" id="startDate" name="startDate" class="form-control" th:value="${project.startDate}" required>
+        </div>
+
+        <!-- Budget År 1 -->
+        <div class="col-md-4">
+            <label for="budgetYear1" class="form-label">Budget År 1</label>
+            <input type="number" id="budgetYear1" name="budgetYear1" class="form-control" th:value="${project.budgetYear1}" required>
+        </div>
+
+        <!-- Budget År 2 -->
+        <div class="col-md-4">
+            <label for="budgetYear2" class="form-label">Budget År 2</label>
+            <input type="number" id="budgetYear2" name="budgetYear2" class="form-control" th:value="${project.budgetYear2}" required>
+        </div>
+
+        <!-- Budget År 3 -->
+        <div class="col-md-4">
+            <label for="budgetYear3" class="form-label">Budget År 3</label>
+            <input type="number" id="budgetYear3" name="budgetYear3" class="form-control" th:value="${project.budgetYear3}" required>
+        </div>
+
+        <!-- Totalt spenderat -->
+        <div class="col-md-6">
+            <label for="spent" class="form-label">Totalt Spenderat</label>
+            <input type="number" id="spent" name="spent" class="form-control" th:value="${project.spent}" required>
+        </div>
+
+        <!-- Spara och Avbryt-knappar -->
+        <div class="col-12 d-flex justify-content-center mt-4">
+            <button type="submit" class="btn btn-success me-3">Spara Ändringar</button>
+            <a th:href="@{/projects}" class="btn btn-secondary">Avbryt</a>
+        </div>
+    </form>
+
+    <!-- Formulär för filuppladdning -->
+    <div class="col-md-12 mt-4">
+        <h5>Ladda upp fil för att uppdatera projekt</h5>
+        <form th:action="@{/{id}/upload-file(id=${project.id})}" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="projectFile" class="form-label">Välj fil (Excel eller PDF)</label>
+                <input type="file" class="form-control" id="projectFile" name="file" accept=".xls,.xlsx,.xlsm,.pdf" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Ladda upp och bearbeta fil</button>
+        </form>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
