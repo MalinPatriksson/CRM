@@ -15,6 +15,7 @@ import se.rmdesign.crm.Services.ExcelService;
 import se.rmdesign.crm.Services.ProjectService;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -76,23 +77,55 @@ public class ProjectController {
     }
 
     @GetMapping("/add-project")
-    public String addProjectPage() {
-        return "add-project";
+    public String showAddProjectForm(Model model) {
+        model.addAttribute("extractedData", new HashMap<>()); // Skicka en tom HashMap vid första laddning
+        return "add-project"; // Namnet på HTML-mallen
     }
 
     @PostMapping("/add")
     public String addProject(
-            @RequestParam String name,
-            @RequestParam String manager,
-            @RequestParam LocalDate deadline,
-            @RequestParam int budgetYear1,
-            @RequestParam int budgetYear2,
-            @RequestParam int budgetYear3,
-            @RequestParam int spent,
-            @RequestParam LocalDate startDate,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String manager,
+            @RequestParam(required = false) LocalDate deadline,
+            @RequestParam(required = false) Integer budgetYear1,
+            @RequestParam(required = false) Integer budgetYear2,
+            @RequestParam(required = false) Integer budgetYear3,
+            @RequestParam(required = false) Integer spent,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) String fundingSource,
+            @RequestParam(required = false) String researchProgram,
+            @RequestParam(required = false) MultipartFile file, // För filuppladdning
+            RedirectAttributes redirectAttributes,
+            Model model) {
 
-        Project newProject = new Project(0, name, manager, deadline, budgetYear1, budgetYear2, budgetYear3, spent, startDate);
+        // Hantera nullvärden genom att sätta standardvärden om nödvändigt
+        budgetYear1 = (budgetYear1 != null) ? budgetYear1 : 0;
+        budgetYear2 = (budgetYear2 != null) ? budgetYear2 : 0;
+        budgetYear3 = (budgetYear3 != null) ? budgetYear3 : 0;
+        spent = (spent != null) ? spent : 0;
+
+        Map<String, String> extractedData = new HashMap<>();
+
+        // Bearbeta filen om den är uppladdad
+        if (file != null && !file.isEmpty()) {
+            try {
+                extractedData = excelService.processPdfFile(file);
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Kunde inte bearbeta PDF-filen: " + e.getMessage());
+                return "redirect:/projects";
+            }
+        }
+
+        // Om fildata hittades, fyll i de värden som inte redan har skickats
+        name = name != null ? name : extractedData.get("Projektnamn");
+        manager = manager != null ? manager : extractedData.get("Projektledares för- och efternamn");
+        startDate = startDate != null ? startDate : LocalDate.parse(extractedData.get("Startdatum"));
+        deadline = deadline != null ? deadline : LocalDate.parse(extractedData.get("Deadline"));
+        fundingSource = fundingSource != null ? fundingSource : extractedData.get("Finansiär");
+        researchProgram = researchProgram != null ? researchProgram : extractedData.get("Forskningsprogram");
+
+        // Skapa ett nytt projekt
+        Project newProject = new Project(0, name, manager, deadline, budgetYear1, budgetYear2, budgetYear3, spent, startDate, fundingSource, researchProgram);
         projectService.addProject(newProject);
 
         redirectAttributes.addFlashAttribute("message", "Projektet \"" + name + "\" har lagts till!");
@@ -146,22 +179,50 @@ public class ProjectController {
     }
 
     @PostMapping("/{id}/confirm-updates")
-    public String confirmUpdates(@PathVariable Integer id,
-                                 @RequestParam Map<String, String> formData,
-                                 RedirectAttributes redirectAttributes) {
-        try {
-            Project project = projectService.getProjectById(id);
+    public String confirmUpdates(@PathVariable Integer id, @ModelAttribute("project") Project project, RedirectAttributes redirectAttributes) {
+        // Hämta befintligt projekt från databasen
+        Project existingProject = projectService.getProjectById(id);
 
-            if (formData.containsKey("name")) project.setName(formData.get("name"));
-            if (formData.containsKey("manager")) project.setManager(formData.get("manager"));
-            if (formData.containsKey("deadline")) project.setDeadline(LocalDate.parse(formData.get("deadline")));
+        // Uppdatera fält med nya värden
+        existingProject.setName(project.getName());
+        existingProject.setManager(project.getManager());
+        existingProject.setStartDate(project.getStartDate());
+        existingProject.setDeadline(project.getDeadline());
+        existingProject.setFundingSource(project.getFundingSource()); // Finansiär
+        existingProject.setResearchProgram(project.getResearchProgram());
 
-            projectService.save(project);
+        // Spara ändringarna
+        projectService.save(existingProject);
 
-            redirectAttributes.addFlashAttribute("message", "Projektet har 1111 uppdaterats framgångsrikt!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Fel vid uppdatering av projektet: " + e.getMessage());
-        }
+        // Meddela användaren
+        redirectAttributes.addFlashAttribute("message", "Projektet har uppdaterats!");
+
         return "redirect:/projects";
+    }
+
+    @PostMapping("/upload-pdf")
+    public String processPdf(@RequestParam("file") MultipartFile file, Model model) {
+        Map<String, String> extractedData = new HashMap<>();
+
+        try {
+            extractedData = excelService.processPdfFile(file);
+        } catch (Exception e) {
+            model.addAttribute("error", "Kunde inte bearbeta PDF-filen: " + e.getMessage());
+        }
+
+        model.addAttribute("extractedData", extractedData);
+        return "add-project"; // Visa samma formulär men nu med data från PDF
+    }
+
+    @PostMapping("/{id}/delete-project")
+    public String deleteProject(@PathVariable int id, RedirectAttributes redirectAttributes) {
+        try {
+            projectService.deleteProjectById(id);
+            redirectAttributes.addFlashAttribute("message", "Projektet togs bort!");
+            return "redirect:/projects";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Kunde inte ta bort projektet. Kontrollera att det inte finns budget kopplad till projektet.");
+            return "redirect:/projects";
+        }
     }
 }
