@@ -8,8 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ExcelService {
@@ -56,7 +57,15 @@ public class ExcelService {
         return extractedData;
     }
 
-    private Map<String, String> processPdfFile(MultipartFile file) throws Exception {
+    private static final Map<String, String> FINANCIER_MAPPING = new HashMap<>() {{
+        put("VINNO", "Vinnova");
+        put("Jordbruksverket", "Jordbruksverket");
+        put("KK", "KK-Stiftelsen");
+        put("Energimyndigheten", "Energimyndigheten");
+        put("VETEN", "Vetenskapsrådet");
+    }};
+
+    public Map<String, String> processPdfFile(MultipartFile file) throws Exception {
         Map<String, String> extractedData = new HashMap<>();
 
         try (InputStream inputStream = file.getInputStream();
@@ -76,15 +85,68 @@ public class ExcelService {
             for (String line : lines) {
                 line = line.trim();
 
-                // Om raden innehåller rubriken, hämta värdet efter rubriken
+                // Kontrollera efter "Projektnamn"
                 if (line.toLowerCase().contains("projektnamn")) {
                     String value = getValueAfterKeyword(line, "Projektnamn");
                     System.out.println("Projektnamn hittat: " + value);
                     extractedData.put("Projektnamn", value);
+
+                    // Kontrollera efter "Projektledares för- och efternamn"
                 } else if (line.toLowerCase().contains("projektledares för- och efternamn")) {
                     String value = getValueAfterKeyword(line, "Projektledares för- och efternamn");
                     System.out.println("Projektledares för- och efternamn hittat: " + value);
                     extractedData.put("Projektledares för- och efternamn", value);
+
+                    // Kontrollera efter "Finansiär"
+                } else if (line.toLowerCase().contains("finansiär")) {
+                    // Skanna raden och leta efter match i mappningen
+                    for (Map.Entry<String, String> entry : FINANCIER_MAPPING.entrySet()) {
+                        if (line.contains(entry.getKey())) {
+                            String validFinancier = entry.getValue(); // Mappa till korrekt namn
+                            System.out.println("Finansiär hittad och mappad: " + validFinancier);
+                            extractedData.put("Finansiär", validFinancier);
+                            break; // Sluta leta när vi hittat en match
+                        }
+                    }
+
+                    // Om ingen match hittas, logga och lämna värdet tomt
+                    if (!extractedData.containsKey("Finansiär")) {
+                        System.out.println("Ingen giltig finansiär hittad på raden: " + line);
+                        extractedData.put("Finansiär", "");
+                    }
+
+                    // Kontrollera efter "Forskningsprogram"
+                } else if (line.toLowerCase().contains("forskningsprogram:")) {
+                    String value = getValueAfterKeyword(line, "Forskningsprogram:");
+                    System.out.println("Forskningsprogram: " + value);
+                    extractedData.put("Forskningsprogram", value);
+
+                    // Kontrollera efter "Total löptid"
+                } else if (line.toLowerCase().contains("total löptid")) {
+                    String value = getValueAfterKeyword(line, "Total löptid");
+                    System.out.println("Total löptid hittat: " + value);
+
+                    // Extrahera endast datumen
+                    Pattern datePattern = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+                    Matcher matcher = datePattern.matcher(value);
+
+                    List<String> dates = new ArrayList<>();
+                    while (matcher.find()) {
+                        dates.add(matcher.group());
+                    }
+
+                    if (dates.size() >= 2) {
+                        String startDate = dates.get(0); // Första datumet
+                        String endDate = dates.get(1);   // Andra datumet
+
+                        System.out.println("Startdatum: " + startDate);
+                        System.out.println("Deadline: " + endDate);
+
+                        extractedData.put("Startdatum", startDate);
+                        extractedData.put("Deadline", endDate);
+                    } else {
+                        System.out.println("Felaktigt format för Total löptid: " + value);
+                    }
                 }
             }
         }
@@ -94,7 +156,6 @@ public class ExcelService {
 
         return extractedData;
     }
-
 
 
     private String getNextNonEmptyCellValue(Row row, int columnIndex) {

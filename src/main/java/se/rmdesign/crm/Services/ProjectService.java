@@ -60,4 +60,12 @@ public class ProjectService {
     public void save(Project project) {
         projectRepository.save(project); // Sparar projektet i databasen
     }
+
+    public void deleteProjectById(int id) {
+        if (projectRepository.existsById(id)) {
+            projectRepository.deleteById(id);
+        } else {
+            throw new IllegalArgumentException("Projekt med ID " + id + " existerar inte.");
+        }
+    }
 }

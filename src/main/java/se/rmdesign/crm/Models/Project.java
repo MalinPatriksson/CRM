@@ -23,6 +23,9 @@ public class Project {
     private int budgetYear3; // Budget för år 3
     private int spent; // Totalt spenderat på projektet
 
+    private String fundingSource; // Nytt fält: Finansiär
+    private String researchProgram; // Nytt fält: Forskningsprogram
+
     public Project() {
     }
 
@@ -35,7 +38,9 @@ public class Project {
             int budgetYear2,
             int budgetYear3,
             int spent,
-            LocalDate startDate
+            LocalDate startDate,
+            String fundingSource,
+            String researchProgram
     ) {
         this.id = id;
         this.name = name;
@@ -46,6 +51,8 @@ public class Project {
         this.budgetYear3 = budgetYear3;
         this.spent = spent;
         this.startDate = startDate;
+        this.fundingSource = fundingSource;
+        this.researchProgram = researchProgram;
     }
 
     // Getter och Setter för startDate
@@ -57,7 +64,7 @@ public class Project {
         this.startDate = startDate;
     }
 
-    // Getters och Setters
+    // Getters och Setters för övriga fält
     public int getId() {
         return id;
     }
@@ -120,5 +127,21 @@ public class Project {
 
     public void setSpent(int spent) {
         this.spent = spent;
+    }
+
+    public String getFundingSource() {
+        return fundingSource;
+    }
+
+    public void setFundingSource(String fundingSource) {
+        this.fundingSource = fundingSource;
+    }
+
+    public String getResearchProgram() {
+        return researchProgram;
+    }
+
+    public void setResearchProgram(String researchProgram) {
+        this.researchProgram = researchProgram;
     }
 }

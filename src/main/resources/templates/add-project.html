@@ -9,63 +9,77 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<div class="app-container" style="width: 1400px; height: 800px; justify-content: center">
-    <h1 class="text-center mb-3">Lägg till ett nytt projekt</h1>
-    <form action="/add" method="post">
-        <!-- Projektinformation -->
-        <div class="form-section">
-            <h2>Projektinformation</h2>
-            <div class="mb-3">
-                <label for="name" class="form-label">Projektets namn</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="Exempel: Bygg CRM-system" required>
+<div class="app-container position-relative " style="width: 1400px; height: 1000px; justify-content: center">
+    <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
+
+    <h1 class="text-center mb-4">Lägg till ett nytt projekt</h1>
+
+    <!-- PDF-uppladdning -->
+    <form th:action="@{/upload-pdf}" method="post" enctype="multipart/form-data">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Ladda upp PDF för att fylla i projektuppgifter</h5>
+                <div class="mb-3">
+                    <label for="file" class="form-label">Ladda upp PDF</label>
+                    <input type="file" id="file" name="file" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Bearbeta PDF</button>
             </div>
-            <div class="mb-3">
-                <label for="manager" class="form-label">Ansvarig</label>
-                <input type="text" class="form-control" id="manager" name="manager" placeholder="Exempel: Anna Svensson" required>
-            </div>
-            <div class="mb-3">
-                <label for="deadline" class="form-label">Deadline</label>
-                <input type="date" class="form-control" id="deadline" name="deadline" required>
-            </div>
-            <div class="mb-3">
-                <label for="startDate" class="form-label">Startdatum</label>
-                <input type="date" class="form-control" id="startDate" name="startDate" required>
+        </div>
+    </form>
+
+    <!-- Formulär för att lägga till projekt -->
+    <form th:action="@{/add}" method="post">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Projektinformation</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Projektnamn</label>
+                        <input type="text" id="name" name="name" class="form-control"
+                               th:value="${extractedData['Projektnamn']} ?: ''">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="manager" class="form-label">Projektledare</label>
+                        <input type="text" id="manager" name="manager" class="form-control"
+                               th:value="${extractedData['Projektledares för- och efternamn']} ?: ''">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Startdatum</label>
+                        <input type="date" id="startDate" name="startDate" class="form-control"
+                               th:value="${extractedData['Startdatum']} ?: ''">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="deadline" class="form-label">Deadline</label>
+                        <input type="date" id="deadline" name="deadline" class="form-control"
+                               th:value="${extractedData['Deadline']} ?: ''">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="fundingSource" class="form-label">Finansiär</label>
+                        <input type="text" id="fundingSource" name="fundingSource" class="form-control"
+                               th:value="${extractedData['Finansiär']} ?: ''">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="researchProgram" class="form-label">Forskningsprogram</label>
+                        <input type="text" id="researchProgram" name="researchProgram" class="form-control"
+                               th:value="${extractedData['Forskningsprogram']} ?: ''">
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Budget -->
-        <div class="form-section">
-            <h4 class="text-center mb-3">Budget</h4>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label for="budgetYear1" class="form-label">År 1 (SEK)</label>
-                    <input type="number" class="form-control" id="budgetYear1" name="budgetYear1" placeholder="Exempel: 50000" required>
-                </div>
-                <div class="col-md-4">
-                    <label for="budgetYear2" class="form-label">År 2 (SEK)</label>
-                    <input type="number" class="form-control" id="budgetYear2" name="budgetYear2" placeholder="Exempel: 60000" required>
-                </div>
-                <div class="col-md-4">
-                    <label for="budgetYear3" class="form-label">År 3 (SEK)</label>
-                    <input type="number" class="form-control" id="budgetYear3" name="budgetYear3" placeholder="Exempel: 70000" required>
-                </div>
-            </div>
-        </div>
-
-        <!-- Spenderat -->
-        <div class="form-section">
-            <div class="mb-3">
-                <label for="spent" class="form-label">Totalt spenderat (SEK)</label>
-                <input type="number" class="form-control" id="spent" name="spent" placeholder="Exempel: 25000" required>
-            </div>
-        </div>
-
-        <!-- Knapp -->
-        <div class="d-flex">
-            <a href="/" class="btn btn-secondary me-3">Tillbaka</a>
+        <!-- Knapp för att lägga till projekt -->
+        <div class="mt-4 text-center">
             <button type="submit" class="btn btn-success">Lägg till projekt</button>
+            <a th:href="@{/projects}" class="btn btn-secondary">Avbryt</a>
         </div>
     </form>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

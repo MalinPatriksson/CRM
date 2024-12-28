@@ -205,3 +205,16 @@ tbody tr:hover {
     width: 150px; /* Anpassa bredden */
     vertical-align: middle;
 }
+.custom-alert {
+    width: 700px; /* Justera bredden */
+    padding: 10px 15px; /* Mindre padding */
+    font-size: 14px; /* Mindre text */
+    line-height: 1.5; /* Smidigare radavstånd */
+    margin: 20px auto; /* Centrera om nödvändigt */
+    text-align: center;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Subtil skugga för djup */
+}
+
+.custom-alert p {
+    margin: 5px; /* Ta bort extra marginaler runt texten */
+}
