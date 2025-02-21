@@ -158,23 +158,42 @@ table {
     width: 100%; /* Sträck ut tabellen */
     margin-bottom: 0; /* Behåll denna om du vill ha mindre mellanrum */
 }
+.project-table th {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.project-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
 
 .project-table th:nth-child(1),
 .project-table td:nth-child(1) {
-    width: 5%; /* ID-kolumnen får mindre utrymme */
-    text-align: center; /* Justera texten för ID-kolumnen */
+    width: 5%; /* ID-kolumnen får minst utrymme */
+    text-align: center;
 }
 
 .project-table th:nth-child(2),
 .project-table td:nth-child(2) {
-    width: 40%; /* Projektnamnet får mer utrymme */
-    text-align: left; /* Justera texten för projektnamn */
+    width: 35%; /* Projektnamnet får mer utrymme, men inte för mycket */
+    text-align: left !important;
+    padding-left: 15px; /* Liten buffert för bättre utseende */
 }
+
 .project-table th:nth-child(3),
-.project-table td:nth-child(3) {
-    width: 25%; /* ID-kolumnen får mindre utrymme */
-    text-align: center; /* Justera texten för ID-kolumnen */
+.project-table td:nth-child(3),
+.project-table th:nth-child(4),
+.project-table td:nth-child(4),
+.project-table th:nth-child(5),
+.project-table td:nth-child(5),
+.project-table th:nth-child(6),
+.project-table td:nth-child(6) {
+    width: 15%; /* De övriga kolumnerna är jämnt fördelade */
+    text-align: center;
 }
+
 
 tbody {
     display: block; /* Gör tabellen flexibel */
@@ -218,3 +237,27 @@ tbody tr:hover {
 .custom-alert p {
     margin: 5px; /* Ta bort extra marginaler runt texten */
 }
+
+.container {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.table {
+    width: 100%;
+    word-wrap: break-word;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.custom-checkbox {
+    width: 18px;  /* Justerad storlek */
+    height: 18px; /* Justerad storlek */
+    cursor: pointer;
+    accent-color: #007bff; /* Behåller blå färg */
+    margin-right: 8px; /* Lämnar lagom mellanrum till texten */
+}
+

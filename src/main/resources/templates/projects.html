@@ -6,10 +6,11 @@
     <title>Alla Projekt</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}"></head>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
 
 <body class="bg-light">
-<div class="app-container position-relative " style="width: 1400px; height: 1000px; justify-content: center">
+<div class="app-container position-relative" style="width: 1600px; height: 1000px; justify-content: center">
     <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
 
     <!-- Meddelanderuta för framgång -->
@@ -26,147 +27,150 @@
 
     <h1 class="mb-4 text-center">Alla Projekt</h1>
 
-    <!-- Sökrutan: Separat rad -->
+    <!-- Sökrutan -->
     <div class="mb-4">
-        <form action="/projects" method="get" class="d-flex justify-content-center align-items-center">
+        <form class="d-flex justify-content-center align-items-center">
             <label>
-                <input type="text" name="keyword" class=" me-2 search" placeholder=" Sök efter projekt eller ansvarig" style="text-align: left;">
+                <input type="text" id="searchKeyword" class="me-2 search" placeholder="Sök efter projekt eller ansvarig" style="text-align: center;" oninput="filterProjects()">
             </label>
-            <button type="submit" class="btn btn-primary px-4">Sök</button>
         </form>
     </div>
 
+    <!-- Filtreringssektion -->
+    <div class="mb-4 d-flex flex-column align-items-center">
+        <div class="d-flex justify-content-center gap-3 w-100 align-items-center">
+            <!-- Projektledare -->
+            <div class="w-25 position-relative">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="filterProjectManagerBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                        Välj projektledare
+                    </button>
+                    <ul class="dropdown-menu w-100 text-start" aria-labelledby="filterProjectManagerBtn">
+                        <li><label class="dropdown-item"><input type="checkbox" id="selectAllManagers" class="me-2"> Alla</label></li>
+                        <li th:each="manager : ${projectManagers}">
+                            <label class="dropdown-item">
+                                <input type="checkbox" class="filter-project-manager me-2" th:value="${manager}"> <span th:text="${manager}"></span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-    <!-- Scrollbar för tabellen -->
+            <!-- Finansiärer -->
+            <div class="w-25 position-relative">
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="filterFundingBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                        Välj finansiärer
+                    </button>
+                    <ul class="dropdown-menu w-100 text-start" aria-labelledby="filterFundingBtn">
+                        <li><label class="dropdown-item"><input type="checkbox" id="selectAllFundings" class="me-2"> Alla</label></li>
+                        <li th:each="funding : ${fundingSources}" th:if="${funding != null and funding != ''}">
+                            <label class="dropdown-item">
+                                <input type="checkbox" class="filter-funding me-2" th:value="${funding}"> <span th:text="${funding}"></span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Budget Range (NU BREDVID DE ANDRA) -->
+            <div class="w-40 position-relative">
+                <div class="d-flex flex-column align-items-center">
+                    <div class="d-flex w-100">
+                        <input type="range" id="minBudgetRange" class="form-range me-2" min="0" max="10000000" step="50000" value="0" oninput="updateBudgetValues()">
+                        <input type="range" id="maxBudgetRange" class="form-range" min="0" max="10000000" step="50000" value="10000000" oninput="updateBudgetValues()">
+                    </div>
+                    <div class="d-flex justify-content-between w-100 mt-2">
+                        <span id="minBudgetValue">Från: <span>0</span> SEK</span>
+                        <span id="maxBudgetValue">Till: <span>10 000 000</span> SEK</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Återställningsknappen centreras under filtren -->
+        <div class="d-flex justify-content-center mt-3">
+            <button id="resetFilters" class="btn btn-secondary">Återställ</button>
+        </div>
+    </div>
+
+    <!-- Tabell med sortering -->
     <div class="table-responsive fixed-table-container project-table">
         <table class="table">
             <thead>
             <tr>
-                <th style="min-width: 50px;">#</th>
-                <th style="min-width: 200px;">
-                    <a th:href="@{/projects(page=1, sortBy='name', order=${sortBy == 'name' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Projektets namn
-                        <span th:if="${sortBy == 'name'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
-                <th style="min-width: 150px;">
-                    <a th:href="@{/projects(page=1, sortBy='manager', order=${sortBy == 'manager' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Ansvarig
-                        <span th:if="${sortBy == 'manager'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
-                <th style="min-width: 150px;">
-                    <a th:href="@{/projects(page=1, sortBy='deadline', order=${sortBy == 'deadline' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Deadline
-                        <span th:if="${sortBy == 'deadline'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
+                <th>#</th>
+                <th>Projektets namn</th>
+                <th>Ansvarig</th>
+                <th>Deadline</th>
+                <th>Status</th> <!-- ✅ Ny status-kolumn -->
                 <th>Åtgärder</th>
-
             </tr>
             </thead>
             <tbody>
             <tr th:each="project, iterStat : ${projects}">
                 <td th:text="${iterStat.index + 1}"></td>
                 <td>
-                    <a href="#" class="text-primary" data-bs-toggle="modal" th:attr="data-bs-target='#projectModal'" th:attrappend="data-project-id=${project.id}">
+                    <a href="#" class="text-primary" data-bs-toggle="modal" th:data-bs-target="'#projectModal'"
+                       th:data-project-id="${project.id}"
+                       th:data-project-name="${project.name}"
+                       th:data-project-manager="${project.manager}"
+                       th:data-project-start="${project.startDate}"
+                       th:data-project-deadline="${project.deadline}"
+                       th:data-project-funding="${project.fundingSource}"
+                       th:data-project-diary="${project.diaryNumber}"
+                       th:data-total-budget="${project.totalBudget}"
+                       th:data-project-status-date="${project.latestStatus?.status}">
                         <span th:text="${project.name}"></span>
                     </a>
                 </td>
                 <td th:text="${project.manager}"></td>
                 <td th:text="${project.deadline}"></td>
-                <!-- Ändra-knapp i varje rad -->
+                <td th:text="${project.latestStatus?.status}"></td>
                 <td>
-                    <a th:href="@{/edit-project/{id}(id=${project.id})}" class="btn btn-warning btn-sm d-flex mb-2">Ändra</a>
-                    <a th:href="@{/projects/{id}/budget(id=${project.id})}" class="btn btn-info btn-sm d-flex">Visa Budget</a>
-
+                    <a th:href="@{/edit/{id}(id=${project.id})}" class="btn btn-warning btn-sm d-flex mb-2">Ändra</a>
+                    <a th:href="@{/projects/{id}/budget(id=${project.id})}" class="btn btn-info btn-sm d-flex mb-2">Visa budget</a>
                 </td>
             </tr>
             </tbody>
-
         </table>
     </div>
 
-    <!-- Paginering -->
-    <div class="d-flex mt-4">
-        <nav>
-            <ul class="pagination">
-                <li class="page-item">
-                    <a class="page-link" th:href="@{/projects?page=${currentPage - 1}}" th:if="${currentPage > 1}">Föregående</a>
-                </li>
-                <li class="page-item" th:each="page : ${pages}">
-                    <a class="page-link" th:href="@{/projects?page=${page}}" th:text="${page}" th:classappend="${page == currentPage} ? 'active'"></a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" th:href="@{/projects?page=${currentPage + 1}}" th:if="${currentPage < totalPages}">Nästa</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
 
-    <div class="d-flex mb-3">
+    <div class="d-flex mb-3 mt-3">
         <a th:href="@{/}" class="btn btn-secondary">Tillbaka</a>
         <a th:href="@{/add-project}" class="btn btn-success">Lägg till projekt</a>
     </div>
 </div>
 
-<!-- Modal för projektinfo -->
+<!-- Modal för projektinformation -->
 <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg"> <!-- Större modal -->
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title" id="projectModalLabel">Projektinformation</h5>
-                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white d-flex justify-content-between">
+                <h5 class="modal-title text-center" id="projectModalLabel">Projektinformation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Projektinformation -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <p><strong>Projektets namn:</strong> <span id="modal-project-name"></span></p>
-                        <p><strong>Ansvarig:</strong> <span id="modal-project-manager"></span></p>
-                        <p><strong>Startdatum:</strong> <span id="modal-project-start"></span></p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Deadline:</strong> <span id="modal-project-deadline"></span></p>
-                        <p><strong>Totalt spenderat:</strong> <span id="modal-spent"></span></p>
-                    </div>
-                </div>
-                <!-- Budget-information -->
-                <h6 class="mb-3 text-muted">Budgetöversikt</h6>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 1</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget1"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 2</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget2"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 3</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget3"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <p class="fw-semibold mb-0 text-end"> <span id="modalDiaryNumber"></span></p>
+                <div class="card shadow-sm p-4 bg-light border-0">
+                    <h5 class="fw-bold text-primary text-center" id="modalProjectName"></h5>
 
-                <!-- Diagram -->
-                <div class="mt-4">
-                    <h6 class="mb-3 text-muted">Spendering vs Budget</h6>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <button id="toggleChartType" class="btn btn-outline-primary">Växla till stapeldiagram</button>
+                    <div class="row text-center mt-3">
+                        <div class="col-md-6">
+                            <p><strong>Ansvarig:</strong> <span id="modalProjectManager"></span></p>
+                            <p><strong>Startdatum:</strong> <span id="modalStartDate"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Deadline:</strong> <span id="modalDeadline"></span></p>
+                            <p><strong>Finansiär:</strong> <span id="modalFunding"></span></p>
+                        </div>
                     </div>
-                    <canvas id="budgetChart" width="400" height="200"></canvas>
+
+                    <div class="text-center mt-4 bg-white p-3 rounded shadow-sm">
+                        <h6 class="text-secondary">Total budget</h6>
+                        <p class="fs-4 fw-bold text-primary"><span id="modalTotalBudget"></span></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,157 +178,102 @@
 </div>
 
 
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    projectModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget; // Hämta knappen som triggar modalen
-        const projectId = button.getAttribute('data-project-id');
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[data-bs-toggle='modal']").forEach(item => {
+            item.addEventListener("click", function () {
+                let modal = document.querySelector("#projectModal");
 
-        fetch(`/project/${projectId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Kunde inte hämta projekt.");
-                }
-                return response.json();
-            })
-            .then(project => {
-                // Uppdatera modalens innehåll
-                document.getElementById('modal-project-start').textContent = project.startDate || "Okänt startdatum";
-                document.getElementById('modal-project-name').textContent = project.name || "Okänt projekt";
-                document.getElementById('modal-project-manager').textContent = project.manager || "Okänd ansvarig";
-                document.getElementById('modal-project-deadline').textContent = project.deadline || "Ingen deadline";
-                document.getElementById('modal-budget1').textContent = project.budgetYear1 + " SEK";
-                document.getElementById('modal-budget2').textContent = project.budgetYear2 + " SEK";
-                document.getElementById('modal-budget3').textContent = project.budgetYear3 + " SEK";
-                document.getElementById('modal-spent').textContent = project.spent + " SEK";
+                // Hämta värden från datattribut
+                let projectName = this.getAttribute("data-project-name");
+                let projectManager = this.getAttribute("data-project-manager");
+                let projectStartDate = this.getAttribute("data-project-start");
+                let projectDeadline = this.getAttribute("data-project-deadline");
+                let projectFunding = this.getAttribute("data-project-funding");
+                let projectDiaryNumber = this.getAttribute("data-project-diary");
 
-                const startDate = new Date(project.startDate);
-                const currentYear = new Date().getFullYear();
-                const projectYear = Math.min(currentYear - startDate.getFullYear() + 1, 3); // Max 3 år
-                const totalYears = 4; // År 0 till År 3
+                // Hämta totalbudget, se till att det är ett korrekt tal
+                let totalBudget = this.getAttribute("data-total-budget");
+                totalBudget = totalBudget && !isNaN(parseFloat(totalBudget)) ? parseFloat(totalBudget.replace(/\s/g, '')) : 0;
 
-                // Förväntad spendering (grön linje)
-                const expectedSpending = [0, project.budgetYear1, project.budgetYear1 + project.budgetYear2, project.budgetYear1 + project.budgetYear2 + project.budgetYear3];
+                // Fyll modalen med info
+                modal.querySelector("#modalProjectName").textContent = projectName;
+                modal.querySelector("#modalProjectManager").textContent = projectManager;
+                modal.querySelector("#modalStartDate").textContent = projectStartDate;
+                modal.querySelector("#modalDeadline").textContent = projectDeadline;
+                modal.querySelector("#modalFunding").textContent = projectFunding;
+                modal.querySelector("#modalDiaryNumber").textContent = projectDiaryNumber;
 
-                // Faktisk spendering (röd linje)
-                const actualSpending = [0];
-                let accumulatedSpent = 0;
-
-                for (let i = 1; i <= totalYears; i++) {
-                    if (i <= projectYear) {
-                        accumulatedSpent += project.spent / projectYear; // Dela upp spenderingen jämt över aktuella år
-                        actualSpending.push(accumulatedSpent);
-                    } else {
-                        actualSpending.push(null); // Ingen spendering för framtida år
-                    }
-                }
-
-                // Prognos (streckad linje)
-                const trendSpending = [...actualSpending];
-                const lastYearSpent = actualSpending[projectYear];
-                const trendPerYear = actualSpending[projectYear] - actualSpending[projectYear - 1];
-
-                for (let i = projectYear + 1; i <= totalYears; i++) {
-                    trendSpending[i] = lastYearSpent + trendPerYear * (i - projectYear);
-                }
-
-                // Ta bort tidigare graf om den finns
-                if (window.budgetChart && typeof window.budgetChart.destroy === 'function') {
-                    window.budgetChart.destroy();
-                }
-
-                let chartType = 'line'; // Standarddiagramtyp
-
-                document.getElementById('toggleChartType').addEventListener('click', () => {
-                    chartType = chartType === 'line' ? 'bar' : 'line'; // Växla typ
-                    const toggleButton = document.getElementById('toggleChartType');
-                    toggleButton.textContent = chartType === 'line' ? 'Växla till stapeldiagram' : 'Växla till linjediagram';
-
-                    // Återskapa diagrammet med ny typ
-                    if (window.budgetChart && typeof window.budgetChart.destroy === 'function') {
-                        window.budgetChart.destroy();
-                    }
-                    renderChart(); // Funktion för att rendera diagrammet
-                });
-
-                function renderChart() {
-                    const ctx = document.getElementById('budgetChart').getContext('2d');
-                    const labels = chartType === 'line' ? ['År 0', 'År 1', 'År 2', 'År 3'] : ['År 1', 'År 2', 'År 3'];
-                    const adjustedTrendSpending =
-                        chartType === 'bar'
-                            ? trendSpending.map((value, index) => (index <= projectYear ? null : value)).slice(1) // Visa trend endast för framtida år
-                            : trendSpending;
-
-                    const adjustedActualSpending =
-                        chartType === 'bar' ? actualSpending.slice(1) : actualSpending; // Ta bort år 0 för stapeldiagram
-
-                    window.budgetChart = new Chart(ctx, {
-                        type: chartType, // Använd den aktuella diagramtypen
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Förväntad spendering',
-                                    data: chartType === 'bar' ? expectedSpending.slice(1) : expectedSpending, // Ta bort år 0 för stapeldiagram
-                                    borderColor: chartType === 'line' ? '#4caf50' : undefined,
-                                    backgroundColor: chartType === 'bar' ? '#4caf50' : 'rgba(76, 175, 80, 0.2)',
-                                    tension: 0.4,
-                                },
-                                {
-                                    label: 'Faktisk spendering',
-                                    data: adjustedActualSpending,
-                                    borderColor: chartType === 'line' ? '#f44336' : undefined,
-                                    backgroundColor: chartType === 'bar' ? '#f44336' : 'rgba(244, 67, 54, 0.2)',
-                                    tension: 0.4,
-                                },
-                                ...(chartType === 'line'
-                                    ? [
-                                        {
-                                            label: 'Prognos (trend)',
-                                            data: adjustedTrendSpending,
-                                            borderColor: '#2196f3',
-                                            borderDash: [5, 5],
-                                            fill: false,
-                                            tension: 0.4,
-                                        },
-                                    ]
-                                    : [
-                                        {
-                                            label: 'Prognos (trend)',
-                                            data: adjustedTrendSpending,
-                                            backgroundColor: 'rgba(33, 150, 243, 0.4)', // Blå staplar för framtida trend
-                                            borderColor: '#2196f3',
-                                            borderWidth: 1,
-                                        },
-                                    ]), // Lägg endast till trend om det är relevant
-                            ],
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { position: 'top' },
-                                tooltip: { enabled: true },
-                            },
-                            scales: {
-                                x: {
-                                    title: { display: true, text: 'År' },
-                                },
-                                y: {
-                                    title: { display: true, text: 'Spendering (SEK)' },
-                                    beginAtZero: true,
-                                    suggestedMax: Math.max(...expectedSpending) * 1.5, // Tillåt skalan att gå högre än budget
-                                },
-                            },
-                        },
-                    });
-                }
-
-                renderChart();
-
+                // Formatera totalbudget med svensk tusentalsavgränsning och SEK
+                modal.querySelector("#modalTotalBudget").textContent = totalBudget.toLocaleString("sv-SE") + " SEK";
             });
-    });
+        });
 
+        function applyFilters() {
+            let selectedManagers = Array.from(document.querySelectorAll(".filter-project-manager:checked"))
+                .map(option => option.value);
+            let selectedFundings = Array.from(document.querySelectorAll(".filter-funding:checked"))
+                .map(option => option.value);
+            let minBudget = parseFloat(document.getElementById("minBudgetRange").value) || 0;
+            let maxBudget = Math.min(parseFloat(document.getElementById("maxBudgetRange").value), 10000000) || 10000000;
+            let searchKeyword = document.getElementById("searchKeyword").value.toLowerCase();
+
+            document.querySelectorAll("tbody tr").forEach(row => {
+                let projectName = row.querySelector("td:nth-child(2) span").textContent.toLowerCase();
+                let manager = row.querySelector("td:nth-child(3)").textContent.trim();
+                let funding = row.querySelector("a").getAttribute("data-project-funding");
+                let totalBudget = parseFloat(row.querySelector("a").getAttribute("data-total-budget")) || 0;
+
+                let managerMatch = selectedManagers.length === 0 || selectedManagers.includes(manager);
+                let fundingMatch = selectedFundings.length === 0 || selectedFundings.includes(funding);
+                let budgetMatch = totalBudget >= minBudget && totalBudget <= maxBudget;
+                let searchMatch = projectName.includes(searchKeyword) || manager.toLowerCase().includes(searchKeyword);
+
+                row.style.display = (managerMatch && fundingMatch && budgetMatch && searchMatch) ? "" : "none";
+            });
+        }
+
+        // Eventlyssnare för sökrutan (live-filter)
+        document.getElementById("searchKeyword").addEventListener("input", applyFilters);
+
+        // Eventlyssnare för filter
+        document.querySelectorAll(".filter-project-manager, .filter-funding").forEach(el => {
+            el.addEventListener("change", applyFilters);
+        });
+
+        // Uppdatera budgetvärden när reglagen ändras
+        document.getElementById("minBudgetRange").addEventListener("input", function () {
+            document.getElementById("minBudgetValue").innerHTML = "Från: " + parseFloat(this.value).toLocaleString("sv-SE") + " SEK";
+            applyFilters();
+        });
+
+        document.getElementById("maxBudgetRange").addEventListener("input", function () {
+            document.getElementById("maxBudgetValue").innerHTML = "Till: " + parseFloat(this.value).toLocaleString("sv-SE") + " SEK";
+            applyFilters();
+        });
+
+        // Hantera "Alla" för projektledare
+        document.getElementById("selectAllManagers").addEventListener("change", function () {
+            let checked = this.checked;
+            document.querySelectorAll(".filter-project-manager").forEach(el => el.checked = checked);
+            applyFilters();
+        });
+
+        // Hantera "Alla" för finansiärer
+        document.getElementById("selectAllFundings").addEventListener("change", function () {
+            let checked = this.checked;
+            document.querySelectorAll(".filter-funding").forEach(el => el.checked = checked);
+            applyFilters();
+        });
+
+        // Hantera återställningsknappen - laddar om sidan för att återställa allt
+        document.getElementById("resetFilters").addEventListener("click", function () {
+            location.reload(); // Ladda om sidan
+        });
+    });
 </script>
+
 </body>
 </html>

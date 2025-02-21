@@ -6,34 +6,25 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/js/all.min.js"></script>
 </head>
-<body>
-<div class="app-container position-relative " style="width: 1400px; height: 1000px; justify-content: center">
+<body class="bg-light">
+<div class="app-container position-relative" style="width: 1300px; height: auto; justify-content: center">
     <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
 
     <h1 class="text-center mb-4">Ändra Projekt</h1>
 
-    <!-- PDF-uppladdning -->
-    <form th:action="@{/upload-pdf}" method="post" enctype="multipart/form-data">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title">Ladda upp PDF för att uppdatera projektuppgifter</h5>
-                <div class="mb-3">
-                    <label for="file" class="form-label">Ladda upp PDF</label>
-                    <input type="file" id="file" name="file" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-primary">Bearbeta PDF</button>
-            </div>
-        </div>
-    </form>
-
     <!-- Formulär för att ändra projekt -->
-    <form th:action="@{/edit-project}" method="post">
+    <form th:action="@{/projects/save}" method="post">
+        <input type="hidden" name="id" th:value="${project.id}">
+
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Projektinformation</h5>
-                <input type="hidden" name="id" th:value="${project.id}">
-                <div class="row">
+
+                <!-- Projektnamn & Projektledare -->
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="name" class="form-label">Projektnamn</label>
                         <input type="text" id="name" name="name" class="form-control" th:value="${project.name}" required>
@@ -43,7 +34,25 @@
                         <input type="text" id="manager" name="manager" class="form-control" th:value="${project.manager}" required>
                     </div>
                 </div>
-                <div class="row mt-3">
+
+                <!-- Finansiär & Forskningsprogram -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="fundingSource" class="form-label">Finansiär</label>
+                        <input type="text" id="fundingSource" name="fundingSource" class="form-control" th:value="${project.fundingSource}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="researchProgram" class="form-label">Forskningsprogram</label>
+                        <input type="text" id="researchProgram" name="researchProgram" class="form-control" th:value="${project.researchProgram}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="diaryNumber" class="form-label">Diarienummer</label>
+                        <input type="text" id="diaryNumber" name="diaryNumber" class="form-control" th:value="${project.diaryNumber}" required>
+                    </div>
+                </div>
+
+                <!-- Startdatum & Deadline -->
+                <div class="row">
                     <div class="col-md-6">
                         <label for="startDate" class="form-label">Startdatum</label>
                         <input type="date" id="startDate" name="startDate" class="form-control" th:value="${project.startDate}" required>
@@ -53,81 +62,165 @@
                         <input type="date" id="deadline" name="deadline" class="form-control" th:value="${project.deadline}" required>
                     </div>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <label for="fundingSource" class="form-label">Finansiär</label>
-                        <input type="text" id="fundingSource" name="fundingSource" class="form-control" th:value="${project.fundingSource}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="researchProgram" class="form-label">Forskningsprogram</label>
-                        <input type="text" id="researchProgram" name="researchProgram" class="form-control" th:value="${project.researchProgram}" required>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- Budgetformulär -->
+
+
+        <!-- 🔹 Statusändring -->
         <div class="card mt-4">
             <div class="card-body">
-                <h5 class="card-title">Budget</h5>
+                <h5 class="card-title">Projektstatus</h5>
                 <div class="row">
-                    <div class="col-md-4">
-                        <label for="budgetYear1" class="form-label">Budget År 1</label>
-                        <input type="number" id="budgetYear1" name="budgetYear1" class="form-control" th:value="${project.budgetYear1}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="budgetYear2" class="form-label">Budget År 2</label>
-                        <input type="number" id="budgetYear2" name="budgetYear2" class="form-control" th:value="${project.budgetYear2}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="budgetYear3" class="form-label">Budget År 3</label>
-                        <input type="number" id="budgetYear3" name="budgetYear3" class="form-control" th:value="${project.budgetYear3}" required>
-                    </div>
-                </div>
-                <div class="row mt-3">
                     <div class="col-md-6">
-                        <label for="spent" class="form-label">Totalt Spenderat</label>
-                        <input type="number" id="spent" name="spent" class="form-control" th:value="${project.spent}" required>
+                        <label for="status" class="form-label">Nuvarande status</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="Idé" th:selected="${currentStatus == 'Idé'}">Idé</option>
+                            <option value="Ansökan" th:selected="${currentStatus == 'Ansökan'}">Ansökan</option>
+                            <option value="Sökt" th:selected="${currentStatus == 'Sökt'}">Sökt</option>
+                            <option value="Beviljat" th:selected="${currentStatus == 'Beviljat'}">Beviljat</option>
+                            <option value="Avslag" th:selected="${currentStatus == 'Avslag'}">Avslag</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="statusDate" class="form-label">Datum för statusändring</label>
+                        <input type="date" id="statusDate" name="statusDate" class="form-control" th:value="${statusDate}">
                     </div>
                 </div>
             </div>
         </div>
-        <div class="mt-4 d-flex justify-content-center gap-2">
-            <!-- Spara ändringar och Avbryt-knappar -->
-            <form th:action="@{/edit-project}" method="post" style="display:inline;">
-                <button type="submit" class="btn btn-success">Spara ändringar</button>
-            </form>
-            <a th:href="@{/projects}" class="btn btn-secondary">Avbryt</a>
 
-            <!-- Ta bort projekt-knapp -->
-            <form th:action="@{/{id}/delete-project(id=${project.id})}" method="post" style="display:inline;">
-                <button type="submit" class="btn btn-danger">Ta bort projekt</button>
-            </form>
+        <!-- 🔹 Statushistorik -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Statushistorik</h5>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center" th:each="status : ${statusHistory}">
+                        <span th:text="${status.status}"></span>
+                        <span class="badge bg-primary rounded-pill" th:text="${status.statusDate}"></span>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <!-- Modal för bekräftelse -->
-        <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="confirmDeleteModalLabel">Bekräfta borttagning</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Stäng"></button>
-                    </div>
-                    <div class="modal-body">
-                        Är du säker på att du vill ta bort detta projekt? Denna åtgärd kan inte ångras.
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
-                        <form th:action="@{/{id}/delete-project(id=${project.id})}" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger">Ja, ta bort</button>
-                        </form>
-                    </div>
+
+        <!-- Budgettabell -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Budgetöversikt</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead>
+                        <tr>
+                            <th>Intäktskälla</th>
+                            <th th:each="year : ${#numbers.sequence(project.startDate.year, project.deadline.year)}" th:text="${year}"></th>
+                            <th>Totalt</th>
+                            <th>Åtgärder</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="entry, rowStat : ${budgetEntries}">
+                            <td>
+                                <input type="text" name="budgetRows[__${rowStat.index}__][Rubrik]" class="form-control"
+                                       th:value="${entry.title}" />
+                            </td>
+                            <td th:each="year : ${#numbers.sequence(project.startDate.year, project.deadline.year)}">
+                                <input type="text" name="budgetRows[__${rowStat.index}__][__${year}__]"
+                                       class="form-control number-format"
+                                       th:value="${entry.values.containsKey(year) ? entry.values.get(year) : ''}" />
+                            </td>
+                            <td>
+                                <input type="text" name="budgetRows[__${rowStat.index}__][Total]"
+                                       class="form-control number-format"
+                                       th:value="${entry.total}" />
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger remove-row">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="add-row-btn" style="margin-top: 10px;">
+                    <button type="button" class="btn btn-primary" id="addRowBtn">Lägg till rad</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Knappar -->
+        <div class="mt-4 d-flex justify-content-center gap-2">
+            <button type="submit" class="btn btn-success">Spara ändringar</button>
+            <a th:href="@{/projects}" class="btn btn-secondary">Avbryt</a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                Ta bort projekt
+            </button>
         </div>
     </form>
+
+    <!-- Modal för bekräftelse -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Bekräfta borttagning</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Stäng"></button>
+                </div>
+                <div class="modal-body">
+                    Är du säker på att du vill ta bort detta projekt? Denna åtgärd kan inte ångras.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                    <form th:action="@{/{id}/delete-project(id=${project.id})}" method="post">
+                        <button type="submit" class="btn btn-danger">Ta bort projekt</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/projectForm.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Formatera siffror med tusentalsavgränsning
+        document.querySelectorAll(".number-format").forEach(input => {
+            let value = input.value.replace(/\s/g, ''); // Ta bort befintliga mellanslag
+            if (!isNaN(value) && value !== '') {
+                input.value = Number(value).toLocaleString("sv-SE");
+            }
+
+            input.addEventListener("input", function () {
+                let rawValue = this.value.replace(/\D/g, ''); // Ta bort allt utom siffror
+                this.value = rawValue ? Number(rawValue).toLocaleString("sv-SE") : '';
+            });
+        });
+
+
+        function addRow() {
+            let tableBody = document.getElementById("budgetTableBody");
+            let newRow = document.createElement("tr");
+
+            let columnCount = tableBody.rows[0].cells.length;
+
+            newRow.innerHTML = `
+        <td><input type="text" name="budgetRows[new][Rubrik]" class="form-control"/></td>
+        ${[...Array(columnCount - 3)].map(() => `<td><input type="text" class="form-control" name="budgetRows[new][]"/></td>`).join('')}
+        <td><input type="text" name="budgetRows[new][Total]" class="form-control"/></td>
+        <td><button type="button" class="btn btn-danger btn-sm removeRow"><i class="bi bi-trash-fill"></i></button></td>
+    `;
+
+            tableBody.appendChild(newRow);
+        }
+        // Ta bort rad vid klick på soptunnan
+        document.querySelectorAll(".remove-row").forEach(button => {
+            button.addEventListener("click", function () {
+                this.closest("tr").remove();
+            });
+        });
+    });
+</script>
+
 </body>
 </html>
