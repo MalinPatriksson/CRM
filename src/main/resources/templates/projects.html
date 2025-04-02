@@ -6,325 +6,270 @@
     <title>Alla Projekt</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}"></head>
-
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .my-project-table-wrapper {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            padding: 1rem;
+            background-color: #ffffff;
+        }
+        .my-project-table-responsive {
+            width: 100%;
+        }
+        .my-project-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+        }
+        .my-project-table th,
+        .my-project-table td {
+            padding: 12px 20px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .my-project-table th {
+            background-color: #e6f0ff;
+            color: #003366;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #bcd0e0;
+        }
+        .my-project-table tbody tr:hover {
+            background-color: #f2f8ff;
+            cursor: pointer;
+        }
+        .my-project-table td.my-project-name {
+            text-align: left;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
 <body class="bg-light">
-<div class="app-container position-relative " style="width: 1400px; height: 1000px; justify-content: center">
-    <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
 
-    <!-- Meddelanderuta för framgång -->
-    <div th:if="${message}" id="alertMessage" class="alert alert-success alert-dismissible fade show custom-alert" role="alert">
-        <p th:text="${message}"></p>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-    <!-- Meddelanderuta för fel -->
-    <div th:if="${error}" id="alertError" class="alert alert-danger alert-dismissible fade show custom-alert" role="alert">
-        <p th:text="${error}"></p>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+<div class="app-container position-relative" style="width: 1600px; height: 1000px; justify-content: center">
 
     <h1 class="mb-4 text-center">Alla Projekt</h1>
 
-    <!-- Sökrutan: Separat rad -->
+    <!-- Sökfält -->
     <div class="mb-4">
-        <form action="/projects" method="get" class="d-flex justify-content-center align-items-center">
+        <form class="d-flex justify-content-center align-items-center">
             <label>
-                <input type="text" name="keyword" class=" me-2 search" placeholder=" Sök efter projekt eller ansvarig" style="text-align: left;">
+                <input type="text" id="searchKeyword" class="me-2 search" placeholder="Sök efter projekt" style="text-align: center;" oninput="filterProjects()">
             </label>
-            <button type="submit" class="btn btn-primary px-4">Sök</button>
         </form>
     </div>
 
-
-    <!-- Scrollbar för tabellen -->
-    <div class="table-responsive fixed-table-container project-table">
-        <table class="table">
-            <thead>
-            <tr>
-                <th style="min-width: 50px;">#</th>
-                <th style="min-width: 200px;">
-                    <a th:href="@{/projects(page=1, sortBy='name', order=${sortBy == 'name' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Projektets namn
-                        <span th:if="${sortBy == 'name'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
-                <th style="min-width: 150px;">
-                    <a th:href="@{/projects(page=1, sortBy='manager', order=${sortBy == 'manager' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Ansvarig
-                        <span th:if="${sortBy == 'manager'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
-                <th style="min-width: 150px;">
-                    <a th:href="@{/projects(page=1, sortBy='deadline', order=${sortBy == 'deadline' and order == 'asc' ? 'desc' : 'asc'})}">
-                        Deadline
-                        <span th:if="${sortBy == 'deadline'}" th:text="${order == 'asc' ? '↑' : '↓'}"></span>
-                    </a>
-                </th>
-                <th>Åtgärder</th>
-
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="project, iterStat : ${projects}">
-                <td th:text="${iterStat.index + 1}"></td>
-                <td>
-                    <a href="#" class="text-primary" data-bs-toggle="modal" th:attr="data-bs-target='#projectModal'" th:attrappend="data-project-id=${project.id}">
-                        <span th:text="${project.name}"></span>
-                    </a>
-                </td>
-                <td th:text="${project.manager}"></td>
-                <td th:text="${project.deadline}"></td>
-                <!-- Ändra-knapp i varje rad -->
-                <td>
-                    <a th:href="@{/edit-project/{id}(id=${project.id})}" class="btn btn-warning btn-sm d-flex mb-2">Ändra</a>
-                    <a th:href="@{/projects/{id}/budget(id=${project.id})}" class="btn btn-info btn-sm d-flex">Visa Budget</a>
-
-                </td>
-            </tr>
-            </tbody>
-
-        </table>
-    </div>
-
-    <!-- Paginering -->
-    <div class="d-flex mt-4">
-        <nav>
-            <ul class="pagination">
-                <li class="page-item">
-                    <a class="page-link" th:href="@{/projects?page=${currentPage - 1}}" th:if="${currentPage > 1}">Föregående</a>
-                </li>
-                <li class="page-item" th:each="page : ${pages}">
-                    <a class="page-link" th:href="@{/projects?page=${page}}" th:text="${page}" th:classappend="${page == currentPage} ? 'active'"></a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" th:href="@{/projects?page=${currentPage + 1}}" th:if="${currentPage < totalPages}">Nästa</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-
-    <div class="d-flex mb-3">
-        <a th:href="@{/}" class="btn btn-secondary">Tillbaka</a>
-        <a th:href="@{/add-project}" class="btn btn-success">Lägg till projekt</a>
-    </div>
-</div>
-
-<!-- Modal för projektinfo -->
-<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg"> <!-- Större modal -->
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title" id="projectModalLabel">Projektinformation</h5>
-                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Filtrering -->
+    <div class="mb-4 d-flex flex-column align-items-center">
+        <div class="d-flex flex-wrap justify-content-center gap-3 w-100 align-items-center">
+            <!-- Filtreringsdropdowns -->
+            <!-- År -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterYearBtn" data-bs-toggle="dropdown">Välj år</button>
+                <ul class="dropdown-menu" aria-labelledby="filterYearBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllYears" data-select-class="filter-year" class="me-2"> Alla</label></li>
+                    <li th:each="year : ${years}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-year me-2" th:value="${year}"> <span th:text="${year}"></span></label>
+                    </li>
+                </ul>
             </div>
-            <div class="modal-body">
-                <!-- Projektinformation -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <p><strong>Projektets namn:</strong> <span id="modal-project-name"></span></p>
-                        <p><strong>Ansvarig:</strong> <span id="modal-project-manager"></span></p>
-                        <p><strong>Startdatum:</strong> <span id="modal-project-start"></span></p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Deadline:</strong> <span id="modal-project-deadline"></span></p>
-                        <p><strong>Totalt spenderat:</strong> <span id="modal-spent"></span></p>
-                    </div>
-                </div>
-                <!-- Budget-information -->
-                <h6 class="mb-3 text-muted">Budgetöversikt</h6>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 1</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget1"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 2</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget2"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-secondary mb-3">
-                            <div class="card-header bg-secondary text-white">Budget År 3</div>
-                            <div class="card-body">
-                                <p class="card-text"><span id="modal-budget3"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Diagram -->
-                <div class="mt-4">
-                    <h6 class="mb-3 text-muted">Spendering vs Budget</h6>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <button id="toggleChartType" class="btn btn-outline-primary">Växla till stapeldiagram</button>
-                    </div>
-                    <canvas id="budgetChart" width="400" height="200"></canvas>
-                </div>
+            <!-- Projektledare -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterProjectManagerBtn" data-bs-toggle="dropdown">Välj projektledare</button>
+                <ul class="dropdown-menu" aria-labelledby="filterProjectManagerBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllManagers" data-select-class="filter-project-manager" class="me-2"> Alla</label></li>
+                    <li th:each="manager : ${projectManagers}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-project-manager me-2" th:value="${manager}"> <span th:text="${manager}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Finansiär -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterFundingBtn" data-bs-toggle="dropdown">Välj finansiär</button>
+                <ul class="dropdown-menu" aria-labelledby="filterFundingBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllFundings" data-select-class="filter-funding" class="me-2"> Alla</label></li>
+                    <li th:each="funding : ${fundingSources}" th:if="${funding != null and funding != ''}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-funding me-2" th:value="${funding}"> <span th:text="${funding}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Akademi -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterAcademyBtn" data-bs-toggle="dropdown">Välj akademi</button>
+                <ul class="dropdown-menu" aria-labelledby="filterAcademyBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllAcademies" data-select-class="filter-academy" class="me-2"> Alla</label></li>
+                    <li th:each="academy : ${academies}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-academy me-2" th:value="${academy}"> <span th:text="${academy}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Forskningsprogram -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterProgramBtn" data-bs-toggle="dropdown">Forskningsprogram</button>
+                <ul class="dropdown-menu" aria-labelledby="filterProgramBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllPrograms" data-select-class="filter-program" class="me-2"> Alla</label></li>
+                    <li th:each="program : ${researchPrograms}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-program me-2" th:value="${program}"> <span th:text="${program}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Status -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterStatusBtn" data-bs-toggle="dropdown">Välj status</button>
+                <ul class="dropdown-menu" aria-labelledby="filterStatusBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllStatus" data-select-class="filter-status" class="me-2"> Alla</label></li>
+                    <li th:each="status : ${statuses}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-status me-2" th:value="${status}"> <span th:text="${status}"></span></label>
+                    </li>
+                </ul>
             </div>
         </div>
+
+        <!-- Knapp för att visa graf -->
+        <div class="d-flex justify-content-center mt-3">
+            <button id="resetFilters" class="btn btn-secondary">Återställ</button>
+            <button id="viewChart" class="btn btn-info text-white ms-3">Visa graf</button>
+        </div>
+    </div>
+
+    <!-- Tabell -->
+    <div class="my-project-table-wrapper">
+        <div class="my-project-table-responsive">
+            <table class="my-project-table">
+                <thead>
+                <tr>
+                    <th>Projektets namn</th>
+                    <th>Projektledare</th>
+                    <th>Status</th>
+                    <th>Inskickad ansökan</th>
+                    <th>Förväntat svar</th>
+                    <th>Startdatum</th>
+                    <th>Deadline</th>
+                    <th>Total budget</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="project : ${projects}"
+                    th:onclick="'window.location.href=\'/edit/' + ${project.id} + '\';'"
+                    th:attr="data-funding=${project.fundingSource}, data-academy=${project.academy}, data-program=${project.researchProgram}, data-status=${project.latestStatus?.status}, data-diary=${project.diaryNumber}">
+                    <td class="my-project-name" th:text="${project.name}"></td>
+                    <td th:text="${project.manager}"></td>
+                    <td th:text="${project.latestStatus?.status}"></td>
+                    <td th:text="${project.statusDate}"></td>
+                    <td th:text="${project.expectedResponseDate}"></td>
+                    <td th:text="${project.startDate}"></td>
+                    <td th:text="${project.deadline}"></td>
+                    <td th:text="${project.formattedTotalBudget}"></td>
+                </tr>
+                </tbody>
+            </table>
+            <p id="noResultsMessage" class="text-center text-muted mt-3" style="display: none;">Inga projekt matchar dina filter.</p>
+        </div>
+    </div>
+
+    <div class="d-flex mb-3 mt-3">
+        <a th:href="@{/add-project}" class="btn btn-success position-absolute" style="top: 10px; left: 10px;">Lägg till projekt</a>
     </div>
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    projectModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget; // Hämta knappen som triggar modalen
-        const projectId = button.getAttribute('data-project-id');
+    document.addEventListener("DOMContentLoaded", function () {
+        function getCheckedValues(selector) {
+            return Array.from(document.querySelectorAll(selector + ':checked')).map(el => el.value);
+        }
 
-        fetch(`/project/${projectId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error("Kunde inte hämta projekt.");
-                }
-                return response.json();
-            })
-            .then(project => {
-                // Uppdatera modalens innehåll
-                document.getElementById('modal-project-start').textContent = project.startDate || "Okänt startdatum";
-                document.getElementById('modal-project-name').textContent = project.name || "Okänt projekt";
-                document.getElementById('modal-project-manager').textContent = project.manager || "Okänd ansvarig";
-                document.getElementById('modal-project-deadline').textContent = project.deadline || "Ingen deadline";
-                document.getElementById('modal-budget1').textContent = project.budgetYear1 + " SEK";
-                document.getElementById('modal-budget2').textContent = project.budgetYear2 + " SEK";
-                document.getElementById('modal-budget3').textContent = project.budgetYear3 + " SEK";
-                document.getElementById('modal-spent').textContent = project.spent + " SEK";
+        function bindSelectAllCheckbox(selectAllId, checkboxClass) {
+            const selectAll = document.getElementById(selectAllId);
+            if (!selectAll) return;
 
-                const startDate = new Date(project.startDate);
-                const currentYear = new Date().getFullYear();
-                const projectYear = Math.min(currentYear - startDate.getFullYear() + 1, 3); // Max 3 år
-                const totalYears = 4; // År 0 till År 3
-
-                // Förväntad spendering (grön linje)
-                const expectedSpending = [0, project.budgetYear1, project.budgetYear1 + project.budgetYear2, project.budgetYear1 + project.budgetYear2 + project.budgetYear3];
-
-                // Faktisk spendering (röd linje)
-                const actualSpending = [0];
-                let accumulatedSpent = 0;
-
-                for (let i = 1; i <= totalYears; i++) {
-                    if (i <= projectYear) {
-                        accumulatedSpent += project.spent / projectYear; // Dela upp spenderingen jämt över aktuella år
-                        actualSpending.push(accumulatedSpent);
-                    } else {
-                        actualSpending.push(null); // Ingen spendering för framtida år
-                    }
-                }
-
-                // Prognos (streckad linje)
-                const trendSpending = [...actualSpending];
-                const lastYearSpent = actualSpending[projectYear];
-                const trendPerYear = actualSpending[projectYear] - actualSpending[projectYear - 1];
-
-                for (let i = projectYear + 1; i <= totalYears; i++) {
-                    trendSpending[i] = lastYearSpent + trendPerYear * (i - projectYear);
-                }
-
-                // Ta bort tidigare graf om den finns
-                if (window.budgetChart && typeof window.budgetChart.destroy === 'function') {
-                    window.budgetChart.destroy();
-                }
-
-                let chartType = 'line'; // Standarddiagramtyp
-
-                document.getElementById('toggleChartType').addEventListener('click', () => {
-                    chartType = chartType === 'line' ? 'bar' : 'line'; // Växla typ
-                    const toggleButton = document.getElementById('toggleChartType');
-                    toggleButton.textContent = chartType === 'line' ? 'Växla till stapeldiagram' : 'Växla till linjediagram';
-
-                    // Återskapa diagrammet med ny typ
-                    if (window.budgetChart && typeof window.budgetChart.destroy === 'function') {
-                        window.budgetChart.destroy();
-                    }
-                    renderChart(); // Funktion för att rendera diagrammet
-                });
-
-                function renderChart() {
-                    const ctx = document.getElementById('budgetChart').getContext('2d');
-                    const labels = chartType === 'line' ? ['År 0', 'År 1', 'År 2', 'År 3'] : ['År 1', 'År 2', 'År 3'];
-                    const adjustedTrendSpending =
-                        chartType === 'bar'
-                            ? trendSpending.map((value, index) => (index <= projectYear ? null : value)).slice(1) // Visa trend endast för framtida år
-                            : trendSpending;
-
-                    const adjustedActualSpending =
-                        chartType === 'bar' ? actualSpending.slice(1) : actualSpending; // Ta bort år 0 för stapeldiagram
-
-                    window.budgetChart = new Chart(ctx, {
-                        type: chartType, // Använd den aktuella diagramtypen
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Förväntad spendering',
-                                    data: chartType === 'bar' ? expectedSpending.slice(1) : expectedSpending, // Ta bort år 0 för stapeldiagram
-                                    borderColor: chartType === 'line' ? '#4caf50' : undefined,
-                                    backgroundColor: chartType === 'bar' ? '#4caf50' : 'rgba(76, 175, 80, 0.2)',
-                                    tension: 0.4,
-                                },
-                                {
-                                    label: 'Faktisk spendering',
-                                    data: adjustedActualSpending,
-                                    borderColor: chartType === 'line' ? '#f44336' : undefined,
-                                    backgroundColor: chartType === 'bar' ? '#f44336' : 'rgba(244, 67, 54, 0.2)',
-                                    tension: 0.4,
-                                },
-                                ...(chartType === 'line'
-                                    ? [
-                                        {
-                                            label: 'Prognos (trend)',
-                                            data: adjustedTrendSpending,
-                                            borderColor: '#2196f3',
-                                            borderDash: [5, 5],
-                                            fill: false,
-                                            tension: 0.4,
-                                        },
-                                    ]
-                                    : [
-                                        {
-                                            label: 'Prognos (trend)',
-                                            data: adjustedTrendSpending,
-                                            backgroundColor: 'rgba(33, 150, 243, 0.4)', // Blå staplar för framtida trend
-                                            borderColor: '#2196f3',
-                                            borderWidth: 1,
-                                        },
-                                    ]), // Lägg endast till trend om det är relevant
-                            ],
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { position: 'top' },
-                                tooltip: { enabled: true },
-                            },
-                            scales: {
-                                x: {
-                                    title: { display: true, text: 'År' },
-                                },
-                                y: {
-                                    title: { display: true, text: 'Spendering (SEK)' },
-                                    beginAtZero: true,
-                                    suggestedMax: Math.max(...expectedSpending) * 1.5, // Tillåt skalan att gå högre än budget
-                                },
-                            },
-                        },
-                    });
-                }
-
-                renderChart();
-
+            selectAll.addEventListener("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll("." + checkboxClass).forEach(cb => cb.checked = isChecked);
+                applyFilters();
             });
-    });
+        }
 
+        function applyFilters() {
+            const selectedManagers = getCheckedValues('.filter-project-manager').map(val => val.toLowerCase());
+            const selectedFundings = getCheckedValues('.filter-funding').map(val => val.toLowerCase());
+            const selectedStatuses = getCheckedValues('.filter-status').map(val => val.toLowerCase());
+            const selectedAcademies = getCheckedValues('.filter-academy').map(val => val.toLowerCase());
+            const selectedPrograms = getCheckedValues('.filter-program').map(val => val.toLowerCase());
+            const selectedYears = getCheckedValues('.filter-year').map(val => val.toLowerCase());
+            const search = document.getElementById("searchKeyword").value.toLowerCase();
+
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const manager = row.querySelector("td:nth-child(2)").textContent.trim().toLowerCase();
+                const status = row.querySelector("td:nth-child(3)").textContent.trim().toLowerCase();
+                const startDateStr = row.querySelector("td:nth-child(6)").textContent.trim();
+                const endDateStr = row.querySelector("td:nth-child(7)").textContent.trim();
+                const funding = row.getAttribute("data-funding")?.toLowerCase() || "";
+                const academy = row.getAttribute("data-academy")?.toLowerCase() || "";
+                const program = row.getAttribute("data-program")?.toLowerCase() || "";
+                const diary = row.getAttribute("data-diary")?.toLowerCase() || "";
+                const name = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
+
+                let activeYears = [];
+                const startYear = startDateStr ? new Date(startDateStr).getFullYear() : null;
+                const endYear = endDateStr ? new Date(endDateStr).getFullYear() : null;
+                if (startYear && endYear) {
+                    for (let y = startYear; y <= endYear; y++) activeYears.push(y.toString());
+                }
+
+                const match = (
+                    (selectedManagers.length === 0 || selectedManagers.includes(manager)) &&
+                    (selectedFundings.length === 0 || selectedFundings.includes(funding)) &&
+                    (selectedStatuses.length === 0 || selectedStatuses.includes(status)) &&
+                    (selectedAcademies.length === 0 || selectedAcademies.includes(academy)) &&
+                    (selectedPrograms.length === 0 || selectedPrograms.includes(program)) &&
+                    (selectedYears.length === 0 || selectedYears.some(y => activeYears.includes(y))) &&
+                    (name.includes(search) || manager.includes(search) || status.includes(search) || funding.includes(search) || academy.includes(search) || program.includes(search) || diary.includes(search))
+                );
+
+                row.style.display = match ? "" : "none";
+            });
+
+            const visibleRows = Array.from(document.querySelectorAll("tbody tr")).filter(row => row.style.display !== "none");
+            document.getElementById("noResultsMessage").style.display = visibleRows.length === 0 ? "block" : "none";
+        }
+
+        // Bindningar
+        ['.filter-project-manager', '.filter-funding', '.filter-status', '.filter-academy', '.filter-program', '.filter-year'].forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => el.addEventListener('change', applyFilters));
+        });
+
+        document.getElementById("searchKeyword").addEventListener("input", applyFilters);
+        document.getElementById("resetFilters").addEventListener("click", () => location.reload());
+
+        bindSelectAllCheckbox("selectAllManagers", "filter-project-manager");
+        bindSelectAllCheckbox("selectAllFundings", "filter-funding");
+        bindSelectAllCheckbox("selectAllStatus", "filter-status");
+        bindSelectAllCheckbox("selectAllAcademies", "filter-academy");
+        bindSelectAllCheckbox("selectAllPrograms", "filter-program");
+        bindSelectAllCheckbox("selectAllYears", "filter-year");
+
+        // 🔹 FIX: Lägg till detta inne i DOMContentLoaded så att getCheckedValues finns tillgänglig
+        document.getElementById("viewChart").addEventListener("click", function () {
+            const params = new URLSearchParams();
+            getCheckedValues(".filter-year").forEach(year => params.append("years", year));
+            getCheckedValues(".filter-project-manager").forEach(mgr => params.append("persons", mgr));
+            getCheckedValues(".filter-funding").forEach(fund => params.append("funders", fund));
+            getCheckedValues(".filter-status").forEach(status => params.append("statuses", status));
+            getCheckedValues(".filter-academy").forEach(academy => params.append("academies", academy));
+            getCheckedValues(".filter-program").forEach(program => params.append("programs", program));
+
+            window.location.href = `/budget?${params.toString()}`;
+        });
+    });
 </script>
 </body>
 </html>

@@ -4,6 +4,7 @@ body {
     line-height: 1.6;
 }
 
+
 h1, h2, h3, h4, h5, h6 {
     font-family: "Poppins", Arial, sans-serif;
     font-weight: 600;
@@ -67,154 +68,82 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 5px; /* Rundade hörn */
 }
 
-.modal-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-body {
-    padding: 20px;
-    font-family: 'Arial', sans-serif;
-    background-color: #fdfdfd;
-}
-
-.modal-body p {
-    margin-bottom: 10px;
-}
-
 #budgetChart {
     margin-top: 20px;
 }
 
-.d-flex {
-    justify-content: center; /* Centrerar horisontellt */
-    align-items: center; /* Centrerar vertikalt */
-    gap: 15px; /* Ger jämnt avstånd mellan knappar */
+.table-responsive {
+    max-height: 600px;
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
 }
 
 .table {
-    width: 100%; /* Se till att tabellen fyller ut behållaren */
-    table-layout: auto; /* Låter dig definiera fasta bredder på kolumner */
-    border-spacing: 0; /* Tar bort eventuella mellanrum mellan celler */
+    width: 100%;
+    table-layout: auto; /* Detta är viktigt för att kolumnerna ska kunna breda ut sig */
+    border-collapse: collapse;
 }
 
-.table th, .table td {
-    padding: 16px 24px; /* Ökar avståndet mellan cellinnehåll */
-    text-align: left !important; /* Justerar text till vänster */
-    word-wrap: break-word; /* Bryter långa texter */
+.table th,
+.table td {
+    padding: 12px 16px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .table th {
+    background-color: #f8f9fa;
     font-weight: bold;
-    background-color: #f8f9fa; /* Ljus bakgrund för rubriker */
-    border-bottom: 2px solid #dee2e6; /* Tydlig avgränsning mellan rubrik och rader */
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
-.table td {
-    border-bottom: 1px solid #dee2e6; /* Lätt linje mellan rader */
-}
-thead th {
-    position: sticky; /* Gör att rubrikerna klistras fast */
-    top: 0; /* Anger att de ska fästa i toppen */
-    background-color: #ffffff; /* Bakgrundsfärg för att undvika genomskinlighet vid scroll */
-    z-index: 2; /* Högre z-index för att ligga ovanför innehållet */
-    border-bottom: 2px solid #dee2e6; /* Lägg till en tydlig avgränsning */
-}
-thead th a {
-    color: #000000; /* Svart färg för länkar */
-    text-decoration: none; /* Ta bort understrykning */
+/* Specifikt för projektnamn */
+.table td:first-child,
+.table th:first-child {
+    text-align: left;
+    white-space: normal !important; /* Tillåt radbrytning */
+    min-width: 300px; /* Ger tillräcklig bredd för projektets namn */
 }
 
-thead th a:hover {
-    color: #000000; /* Behåll svart färg vid hover */
-    text-decoration: underline; /* Valfritt: Lägg till understrykning vid hover */
-}
-.btn-close {
-    background-color: transparent; /* Gör bakgrunden genomskinlig */
-    filter: invert(100%); /* Byt färg till vit */
-    opacity: 1; /* Sätt full opacitet för att säkerställa synlighet */
+/* Hover-effekt */
+.table tbody tr:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
 }
 
-.btn-close:hover {
-    filter: invert(80%); /* Gör den lite mindre ljus vid hovring */
-}
-
-.fixed-table-container {
-    min-height: 400px; /* Fast minimumhöjd för tabellcontainern */
-    max-height: 600px; /* Maxhöjd för att hantera långa listor */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-
-.table-responsive {
-    overflow-y: auto; /* Scrollbar vid behov */
-    border: none;
-    max-height: 700px; /* Begränsa höjden */
-    overflow-x: auto;
-}
-
-table {
-    width: 100%; /* Sträck ut tabellen */
-    margin-bottom: 0; /* Behåll denna om du vill ha mindre mellanrum */
-}
-
-.project-table th:nth-child(1),
-.project-table td:nth-child(1) {
-    width: 5%; /* ID-kolumnen får mindre utrymme */
-    text-align: center; /* Justera texten för ID-kolumnen */
-}
-
-.project-table th:nth-child(2),
-.project-table td:nth-child(2) {
-    width: 40%; /* Projektnamnet får mer utrymme */
-    text-align: left; /* Justera texten för projektnamn */
-}
-.project-table th:nth-child(3),
-.project-table td:nth-child(3) {
-    width: 25%; /* ID-kolumnen får mindre utrymme */
-    text-align: center; /* Justera texten för ID-kolumnen */
-}
-
-tbody {
-    display: block; /* Gör tabellen flexibel */
-    height: 600px; /* Fast höjd för raderna i tabellen */
-    width: 100%;
-}
-
-thead, tbody tr {
-    display: table; /* Behåll tabellstrukturen */
-    table-layout: fixed; /* Förhindra layoutändringar */
-    width: 100%; /* Matcha bredden på tabellen */
-}
-
-tbody tr {
-    background-color: #fff;
-}
-
-tbody tr:hover {
-    background-color: #f8f9fa; /* Hover-effekt */
-}
+/* Sökrutan */
 .search {
     width: 500px;
     height: 50px;
     border-radius: 5px;
-    border-color: #0d6efd;
-}
-.table th, .table td {
-    width: 150px; /* Anpassa bredden */
-    vertical-align: middle;
-}
-.custom-alert {
-    width: 700px; /* Justera bredden */
-    padding: 10px 15px; /* Mindre padding */
-    font-size: 14px; /* Mindre text */
-    line-height: 1.5; /* Smidigare radavstånd */
-    margin: 20px auto; /* Centrera om nödvändigt */
-    text-align: center;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Subtil skugga för djup */
+    border: 1px solid #0d6efd;
+    padding: 0 10px;
 }
 
-.custom-alert p {
-    margin: 5px; /* Ta bort extra marginaler runt texten */
+/* Meddelanderutor */
+.custom-alert {
+    width: 700px;
+    padding: 10px 15px;
+    font-size: 14px;
+    margin: 20px auto;
+    text-align: center;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+
+.form-group {
+    margin-bottom: 15px;
+}
+.custom-checkbox {
+    width: 18px;  /* Justerad storlek */
+    height: 18px; /* Justerad storlek */
+    cursor: pointer;
+    accent-color: #007bff; /* Behåller blå färg */
+    margin-right: 8px; /* Lämnar lagom mellanrum till texten */
 }
