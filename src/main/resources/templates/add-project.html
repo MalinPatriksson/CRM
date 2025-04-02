@@ -10,115 +10,133 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="bg-light">
-<div class="app-container position-relative" style="width: 1300px; height: auto; justify-content: center">
-    <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
-
+<div class="app-container position-relative" style="width: 1600px; height: auto; justify-content: center">
 
     <h2 class="text-center mb-3">Lägg till Projekt</h2>
 
-    <!-- PDF-uppladdning -->
-    <form th:action="@{/upload-pdf}" method="post" enctype="multipart/form-data" class="mb-3">
+    <div th:if="${errorMessage}" class="alert alert-danger text-center">
+        <strong th:text="${errorMessage}"></strong>
+    </div>
+
+
+
+    <!-- Fil-uppladdning för både PDF & Excel -->
+    <form th:action="@{/upload-excel}" method="post" enctype="multipart/form-data" class="mb-3">
         <div class="card">
             <div class="card-body">
-                <h6 class="card-title">Ladda upp PDF för att fylla i projektuppgifter</h6>
+                <h6 class="card-title">Ladda upp Excel-fil för att fylla i projektuppgifter</h6>
                 <div class="input-group">
-                    <input type="file" id="file" name="file" class="form-control" onchange="previewPDF(event)">
-                    <button type="submit" class="btn btn-primary btn-sm">Bearbeta PDF</button>
-                    <button type="button" id="viewPdfButton" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#pdfModal" style="display: none;">
-                        📄 Visa PDF
-                    </button>
+                    <input type="file" id="file" name="file" class="form-control" accept=".xlsx">
+                    <button type="submit" class="btn btn-primary btn-sm">Bearbeta Fil</button>
                 </div>
             </div>
         </div>
     </form>
 
-    <!-- Modal för PDF-förhandsvisning -->
-    <div class="modal fade" id="pdfModal" tabindex="-1" aria-labelledby="pdfModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="pdfModalLabel">Förhandsgranska PDF</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Stäng"></button>
-                </div>
-                <div class="modal-body">
-                    <iframe id="pdfViewer" src="" width="100%" height="600px" style="border: none;"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
     <!-- Formulär för att lägga till projekt -->
-    <form id="projectForm" method="post" action="/add" enctype="multipart/form-data">
+    <form id="projectForm" method="post" action="/add" enctype="multipart/form-data" novalidate>
         <div class="card">
             <div class="card-body">
                 <h6 class="card-title">Projektinformation</h6>
                 <div class="row g-2">
                     <div class="col-md-6">
                         <label for="name" class="form-label">Projektnamn</label>
-                        <input type="text" id="name" name="name" class="form-control"
+                        <input type="text" id="name" name="name" class="form-control required-field"
                                th:value="${extractedData['Projektnamn']} ?: ''">
                     </div>
                     <div class="col-md-6">
                         <label for="diaryNumber" class="form-label">Diarienummer</label>
-                        <input type="text" id="diaryNumber" name="diaryNumber" class="form-control"
+                        <input type="text" id="diaryNumber" name="diaryNumber" class="form-control required-field"
                                th:value="${#strings.replace(extractedData['Diarienummer'], ':', '')} ?: ''">
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
                     <div class="col-md-6">
                         <label for="manager" class="form-label">Projektledare</label>
-                        <input type="text" id="manager" name="manager" class="form-control"
+                        <input type="text" id="manager" name="manager" class="form-control required-field"
                                th:value="${extractedData['Projektledares för- och efternamn']} ?: ''">
                     </div>
                     <div class="col-md-6">
                         <label for="fundingSource" class="form-label">Finansiär</label>
-                        <input type="text" id="fundingSource" name="fundingSource" class="form-control"
+                        <input type="text" id="fundingSource" name="fundingSource" class="form-control required-field"
                                th:value="${#strings.replace(extractedData['Finansiär'], 'Motpart:', '')} ?: ''">
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
                     <div class="col-md-6">
                         <label for="startDate" class="form-label">Startdatum</label>
-                        <input type="date" id="startDate" name="startDate" class="form-control"
+                        <input type="date" id="startDate" name="startDate" class="form-control required-field"
                                th:value="${extractedData['Startdatum']} ?: ''">
                     </div>
                     <div class="col-md-6">
                         <label for="deadline" class="form-label">Deadline</label>
-                        <input type="date" id="deadline" name="deadline" class="form-control"
+                        <input type="date" id="deadline" name="deadline" class="form-control required-field"
                                th:value="${extractedData['Deadline']} ?: ''">
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <label for="researchProgram" class="form-label">Forskningsprogram</label>
-                        <input type="text" id="researchProgram" name="researchProgram" class="form-control"
+                        <input type="text" id="researchProgram" name="researchProgram" class="form-control required-field"
                                th:value="${#strings.replace(extractedData['Forskningsprogram'], ':', '')} ?: ''">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="academy" class="form-label">Akademi</label>
+                        <select id="academy" name="academy" class="form-select required-field">
+                            <option value="">Välj akademi...</option>
+                            <option value="ITE">ITE</option>
+                            <option value="FIH">FIH</option>
+                            <option value="LHS">LHS</option>
+                            <option value="HOV">HOV</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- 🔹 STATUS & DATUM -->
                 <div class="row g-2 mt-2">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="status" class="form-label">Projektstatus</label>
-                        <select id="status" name="status" class="form-select">
-                            <option value="Idé">Idé</option>
-                            <option value="Ansökan">Ansökan</option>
-                            <option value="Sökt">Sökt</option>
-                            <option value="Beviljat">Beviljat</option>
-                            <option value="Avslag">Avslag</option>
+                        <select id="status" name="status" class="form-select required-field" th:value="${project?.currentStatus ?: 'Idé'}">
+                            <option value="Idé" th:selected="${project?.currentStatus == 'Idé'}">Idé</option>
+                            <option value="Ansökan" th:selected="${project?.currentStatus == 'Ansökan'}">Påbörjad ansökan</option>
+                            <option value="Sökt" th:selected="${project?.currentStatus == 'Sökt'}">Sökt</option>
+                            <option value="Beviljat" th:selected="${project?.currentStatus == 'Beviljat'}">Beviljat</option>
+                            <option value="Avslag" th:selected="${project?.currentStatus == 'Avslag'}">Avslag</option>
                         </select>
                     </div>
-                    <div class="col-md-6">
-                        <label for="statusDate" class="form-label">Statusdatum</label>
-                        <input type="date" id="statusDate" name="statusDate" class="form-control">
+                    <div class="col-md-4">
+                        <label for="statusDate" class="form-label">Datum för statusändring</label>
+                        <input type="date" id="statusDate" name="statusDate" class="form-control"
+                               th:value="${project?.statusDate ?: #dates.format(#dates.createNow(), 'yyyy-MM-dd')}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="expectedResponseDate" class="form-label">Förväntat svar</label>
+                        <input type="date" id="expectedResponseDate" name="expectedResponseDate" class="form-control required-field"
+                               th:value="${project?.expectedResponseDate ?: ''}">
                     </div>
                 </div>
 
-            </div>
-        </div>
 
-        <!-- Budget Information -->
+                <!-- 🔹 Viktning - Sannolikhet för godkännande -->
+                <div class="row justify-content-center align-items-center mt-4">
+                    <div class="col-md-2 text-end">
+                        <label for="weighting" class="form-label mb-0">Viktning (%)</label>
+                    </div>
+                    <div class="col-md-1">
+                        <input type="number" id="weighting" name="weighting" class="form-control text-center required-field"
+                               min="0" max="100" th:value="${currentStatusWeighting}" oninput="updateWeightingBar(this.value)" />
+                    </div>
+                    <div class="col-md-6">
+                        <div class="progress" style="height: 36px;">
+                            <div id="weightingBar" class="progress-bar bg-success d-flex align-items-center justify-content-center"
+                                 role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="weightingText">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Information -->
         <div class="card mt-4">
             <div class="card-body">
                 <h5 class="card-title">Budgetöversikt</h5>
@@ -130,34 +148,28 @@
                             <th>Intäkter</th>
                             <th th:each="year : ${extractedData['Years']}" th:text="${year}"></th>
                             <th>Total</th>
-                            <th>Åtgärder</th>
                         </tr>
                         </thead>
                         <tbody id="budgetTableBody">
                         <tr th:each="row, rowStat : ${extractedData['BudgetRows']}">
                             <td>
-                                <input type="text" name="budgetRows[__${rowStat.index}__][Rubrik]" class="form-control"
+                                <input type="text" th:name="'budgetRows[' + ${rowStat.index} + '][Rubrik]'" class="form-control"
                                        th:value="${row['Rubrik']} ?: ''"/>
                             </td>
                             <td th:each="year : ${extractedData['Years']}">
-                                <input type="text" th:name="'budgetRows[' + ${rowStat.index} + '][' + ${year} + ']'" class="form-control"
-                                       th:value="${row[year]} ?: ''"/>
+                                <input type="text"
+                                       th:name="'budgetRows[' + ${rowStat.index} + '][' + ${year} + ']'"
+                                       class="form-control"
+                                       th:value="${row[year + '']} ?: '0.0'"/>
                             </td>
                             <td>
-                                <input type="text" name="budgetRows[__${rowStat.index}__][Total]" class="form-control total-input"
+                                <input type="text" th:name="'budgetRows[' + ${rowStat.index} + '][Total]'" class="form-control"
                                        th:value="${row['Total']} ?: ''"/>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-danger" onclick="removeRow(this)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
                             </td>
                         </tr>
                         </tbody>
+
                     </table>
-                </div>
-                <div class="add-row-btn" style="margin-top: 10px;">
-                    <button type="button" class="btn btn-primary" id="addRowBtn">Lägg till rad</button>
                 </div>
             </div>
         </div>
@@ -165,12 +177,124 @@
         <!-- Knapp för att lägga till projekt -->
         <div class="mt-3 text-center">
             <button type="submit" class="btn btn-success">Lägg till projekt</button>
-            <a th:href="@{/projects}" class="btn btn-secondary">Avbryt</a>
+            <a th:href="@{/projects}" class="btn btn-secondary">Tillbaka</a>
+        </div>
+            </div>
         </div>
     </form>
 </div>
 
+<!-- Modal för att visa saknade fält -->
+<div class="modal fade" id="missingFieldsModal" tabindex="-1" aria-labelledby="missingFieldsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="missingFieldsModalLabel">⚠️ Saknade fält</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Stäng"></button>
+            </div>
+            <div class="modal-body">
+                <p>Följande fält är inte ifyllda:</p>
+                <ul id="missingFieldsList" class="text-danger"></ul>
+                <p>Vill du spara ändå?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" id="confirmSaveButton" class="btn btn-danger">Spara ändå</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/projectForm.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const statusSelect = document.getElementById("status");
+        const weightingInput = document.getElementById("weighting");
+        const weightingBar = document.getElementById("weightingBar");
+        const weightingText = document.getElementById("weightingText");
+        const projectForm = document.getElementById("projectForm");
+        const requiredFields = document.querySelectorAll(".required-field");
+        const missingFieldsList = document.getElementById("missingFieldsList");
+        const confirmSaveButton = document.getElementById("confirmSaveButton");
+
+        function updateWeightingBar(value) {
+            const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
+            weightingBar.style.width = safeValue + "%";
+            weightingBar.setAttribute("aria-valuenow", safeValue);
+            weightingText.innerText = safeValue + "%";
+        }
+
+        function updateWeighting() {
+            let percentage = parseInt(weightingInput.value);
+
+            if (statusSelect.value === "Beviljat") {
+                percentage = 100;
+            } else if (statusSelect.value === "Avslag") {
+                percentage = 0;
+            }
+
+            weightingInput.value = percentage;
+            updateWeightingBar(percentage);
+        }
+
+        function validateForm(event) {
+            event.preventDefault(); // Stoppa formulärskick direkt
+
+            let missingFields = [];
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                let value = field.value;
+
+                // Hantera olika typer av fält
+                if (field.tagName === "SELECT") {
+                    value = field.options[field.selectedIndex]?.value || "";
+                } else if (field.type === "date" || field.type === "number" || field.type === "text") {
+                    value = value?.toString().trim();
+                }
+
+                if (!value) {
+                    field.classList.add("is-invalid");
+
+                    // 🔍 Hitta label på ett säkert sätt
+                    let label = document.querySelector(`label[for="${field.id}"]`);
+
+                    if (!label) {
+                        // fallback – leta inom samma kolumn
+                        label = field.closest(".col, .col-md-1, .col-md-2, .col-md-4, .col-md-6")?.querySelector("label");
+                    }
+
+                    const labelText = label?.innerText?.trim() || "Okänt fält";
+                    missingFields.push(labelText);
+                    isValid = false;
+                } else {
+                    field.classList.remove("is-invalid");
+                }
+            });
+
+            if (!isValid) {
+                missingFieldsList.innerHTML = missingFields.map(field => `<li>${field}</li>`).join("");
+                const missingModal = new bootstrap.Modal(document.getElementById("missingFieldsModal"));
+                missingModal.show();
+            } else {
+                projectForm.submit();
+            }
+        }
+
+
+        // Event listeners
+        statusSelect.addEventListener("change", updateWeighting);
+        weightingInput.addEventListener("input", () => updateWeightingBar(weightingInput.value));
+        projectForm.addEventListener("submit", validateForm);
+        confirmSaveButton.addEventListener("click", function () {
+            projectForm.submit(); // Tvinga igenom spara trots varningar
+        });
+
+        // Initiering vid sidladdning
+        updateWeighting(); // Sätt procent utifrån status
+        updateWeightingBar(weightingInput.value); // Säkerställ baren stämmer från start
+    });
+</script>
 </body>
 </html>

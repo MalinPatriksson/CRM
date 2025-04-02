@@ -1,3 +1,4 @@
+<!-- KOD DEL 1 - HEAD OCH START -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="sv">
 <head>
@@ -9,226 +10,249 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="bg-light">
-<div class="app-container position-relative" style="width: 1300px; height: auto; justify-content: center">
-    <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
+<div class="app-container position-relative" style="width: 1600px; height: auto; justify-content: center">
+    <a th:href="@{/projects}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Alla projekt</a>
 
     <h1 class="text-center">Budget och Statistik</h1>
 
-    <!-- Filtreringssektion -->
     <form id="budgetFilterForm" action="/budget" method="get">
         <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
 
-            <!-- Filtrera på år -->
+            <!-- KOD DEL 2 - FILTER -->
+
+            <!-- ÅR -->
             <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle" type="button" id="filterYearBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                    Välj år
-                </button>
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterYearBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj år</button>
                 <ul class="dropdown-menu" aria-labelledby="filterYearBtn">
-                    <li>
-                        <label class="dropdown-item">
-                            <input type="checkbox" id="selectAllYears"> Alla
-                        </label>
-                    </li>
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllYears"> Alla</label></li>
                     <li th:each="year : ${availableYears}">
                         <label class="dropdown-item">
-                            <input type="checkbox" name="years" class="year-checkbox" th:value="${year}">
+                            <input type="checkbox" name="years" class="year-checkbox" th:value="${year}" th:checked="${selectedYears.contains(year)}">
                             <span th:text="${year}"></span>
                         </label>
                     </li>
                 </ul>
             </div>
 
-            <!-- Filtrera på finansiär -->
+            <!-- PROJEKTLEDARE -->
             <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle" type="button" id="filterFundingBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                    Välj finansiär
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="filterFundingBtn">
-                    <li>
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterPersonBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj projektledare</button>
+                <ul class="dropdown-menu" aria-labelledby="filterPersonBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllPersons"> Alla</label></li>
+                    <li th:each="person : ${projectManagers}">
                         <label class="dropdown-item">
-                            <input type="checkbox" id="selectAllFunders"> Alla
+                            <input type="checkbox" name="persons" class="person-checkbox" th:value="${person}" th:checked="${selectedPersons.contains(person)}">
+                            <span th:text="${person}"></span>
                         </label>
                     </li>
+                </ul>
+            </div>
+
+            <!-- FINANSIÄR -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterFundingBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj finansiär</button>
+                <ul class="dropdown-menu" aria-labelledby="filterFundingBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllFunders"> Alla</label></li>
                     <li th:each="funding : ${fundingSources}">
                         <label class="dropdown-item">
-                            <input type="checkbox" name="funders" class="funder-checkbox" th:value="${funding}">
+                            <input type="checkbox" name="funders" class="funder-checkbox" th:value="${funding}" th:checked="${selectedFunders.contains(funding)}">
                             <span th:text="${funding}"></span>
                         </label>
                     </li>
                 </ul>
             </div>
 
-            <!-- Filtrera på person -->
+            <!-- AKADEMI -->
             <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle" type="button" id="filterPersonBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                    Välj person
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="filterPersonBtn">
-                    <li>
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterAcademyBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj akademi</button>
+                <ul class="dropdown-menu" aria-labelledby="filterAcademyBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllAcademies"> Alla</label></li>
+                    <li th:each="academy : ${academies}">
                         <label class="dropdown-item">
-                            <input type="checkbox" id="selectAllPersons"> Alla
-                        </label>
-                    </li>
-                    <li th:each="person : ${projectManagers}">
-                        <label class="dropdown-item">
-                            <input type="checkbox" name="persons" class="person-checkbox" th:value="${person}">
-                            <span th:text="${person}"></span>
+                            <input type="checkbox" name="academies" class="academy-checkbox" th:value="${academy}" th:checked="${selectedAcademies.contains(academy)}">
+                            <span th:text="${academy}"></span>
                         </label>
                     </li>
                 </ul>
             </div>
+
+            <!-- FORSKNINGSPROGRAM -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterProgramBtn" data-bs-toggle="dropdown" aria-expanded="false">Forskningsprogram</button>
+                <ul class="dropdown-menu" aria-labelledby="filterProgramBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllPrograms"> Alla</label></li>
+                    <li th:each="program : ${researchPrograms}">
+                        <label class="dropdown-item">
+                            <input type="checkbox" name="programs" class="program-checkbox" th:value="${program}" th:checked="${selectedPrograms.contains(program)}">
+                            <span th:text="${program}"></span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- STATUS -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterStatusBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj status</button>
+                <ul class="dropdown-menu" aria-labelledby="filterStatusBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllStatus"> Alla</label></li>
+                    <li th:each="status : ${availableStatuses}">
+                        <label class="dropdown-item">
+                            <input type="checkbox" name="statuses" class="status-checkbox" th:value="${status}" th:checked="${selectedStatuses.contains(status)}">
+                            <span th:text="${status}"></span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="form-check d-flex justify-content-center mt-3">
+                <input class="form-check-input" type="checkbox" id="weightedCheckbox">
+                <label class="form-check-label ms-2" for="weightedCheckbox">
+                    Viktad budget
+                </label>
+            </div>
+
+
         </div>
 
+        <!-- KOD DEL 3 - KNAPPAR & DIAGRAM -->
         <div class="d-flex mt-3 justify-content-center">
             <button type="button" id="applyFilters" class="btn btn-primary">Visa statistik</button>
             <button type="button" id="resetFilters" class="btn btn-secondary ms-3">Återställ</button>
         </div>
     </form>
 
-    <!-- Visar summan av sökta pengar -->
     <div class="mt-5 text-center">
         <h3>Total budget: <span id="totalBudgetValue">0 SEK</span></h3>
     </div>
 
-    <!-- Stapeldiagram -->
+    <span id="selectedStatusLabel" th:text="${selectedStatusLabel}" hidden></span>
+
     <div class="mt-4">
         <canvas id="budgetChart"></canvas>
+        <div id="noDataMessage" class="text-center text-muted mt-3" style="display:none;">
+            Ingen data att visa för valda filter.
+        </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function getFilterParams() {
+                const params = new URLSearchParams();
+                document.querySelectorAll("input[name='years']:checked").forEach(cb => params.append("years", cb.value));
+                document.querySelectorAll("input[name='funders']:checked").forEach(cb => params.append("funders", cb.value));
+                document.querySelectorAll("input[name='persons']:checked").forEach(cb => params.append("persons", cb.value));
+                document.querySelectorAll("input[name='statuses']:checked").forEach(cb => params.append("statuses", cb.value));
+                document.querySelectorAll("input[name='academies']:checked").forEach(cb => params.append("academies", cb.value));
+                document.querySelectorAll("input[name='programs']:checked").forEach(cb => params.append("programs", cb.value));
+                const weighted = document.getElementById("weightedCheckbox").checked;
+                params.append("weighted", weighted);
+                return params.toString();
+            }
 
-        /** 🔹 Funktion för att hämta valda filtreringsparametrar **/
-        function getFilterParams() {
-            let params = new URLSearchParams();
+            function updateTotalBudget() {
+                fetch('/budget/total?' + getFilterParams())
+                    .then(res => res.json())
+                    .then(data => document.getElementById("totalBudgetValue").textContent = data.totalBudget);
+            }
 
-            // Hämta valda år
-            document.querySelectorAll("input[name='years']:checked").forEach(cb => {
-                params.append("years", cb.value);
-            });
+            function updateChart() {
+                fetch('/budget/chart?' + getFilterParams())
+                    .then(res => res.json())
+                    .then(data => {
+                        const ctx = document.getElementById('budgetChart').getContext('2d');
+                        const noData = !data.labels || data.labels.length === 0;
 
-            // Hämta valda finansiärer
-            document.querySelectorAll("input[name='funders']:checked").forEach(cb => {
-                params.append("funders", cb.value);
-            });
+                        if (window.budgetChart) window.budgetChart.destroy();
 
-            // Hämta valda personer
-            document.querySelectorAll("input[name='persons']:checked").forEach(cb => {
-                params.append("persons", cb.value);
-            });
-
-            return params.toString();
-        }
-
-        /** 🔹 Uppdatera total budget **/
-        function updateTotalBudget() {
-            fetch('/budget/total?' + getFilterParams())
-                .then(response => response.json())
-                .then(data => {
-                    document.querySelector("#totalBudgetValue").textContent = data.totalBudget;
-                })
-                .catch(error => console.error("Error fetching budget:", error));
-        }
-
-
-        /** 🔹 Uppdatera stapeldiagram **/
-        function updateChart() {
-            fetch('/budget/chart?' + getFilterParams())
-                .then(response => response.json())
-                .then(data => {
-                    let ctx = document.getElementById('budgetChart').getContext('2d');
-
-                    // Om diagrammet redan existerar, förstör det innan vi skapar ett nytt
-                    if (window.budgetChart && typeof window.budgetChart.destroy === "function") {
-                        window.budgetChart.destroy();
-                    }
-
-                    // Skapa nytt diagram
-                    window.budgetChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: 'Sökta medel',
-                                data: data.values,
-                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
+                        if (noData) {
+                            document.getElementById('budgetChart').style.display = 'none';
+                            document.getElementById('noDataMessage').style.display = 'block';
+                            return;
+                        } else {
+                            document.getElementById('budgetChart').style.display = 'block';
+                            document.getElementById('noDataMessage').style.display = 'none';
                         }
-                    });
-                })
-                .catch(error => console.error("Error fetching chart data:", error));
-        }
 
-        /** 🔹 Hantera "Alla" checkboxar **/
-        function handleSelectAll(selectAllCheckbox, checkboxes) {
-            selectAllCheckbox.addEventListener("change", function () {
-                checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+                        window.budgetChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: "Sökta medel",
+                                    data: data.values,
+                                    backgroundColor: "rgba(54, 162, 235, 0.6)",
+                                    borderColor: "rgba(54, 162, 235, 1)",
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: { y: { beginAtZero: true } }
+                            }
+                        });
+                    });
+            }
+
+            function triggerFilters() {
+                updateTotalBudget();
+                updateChart();
+            }
+
+            function handleSelectAll(allId, className) {
+                const allBox = document.getElementById(allId);
+                const boxes = document.querySelectorAll("." + className);
+                allBox.addEventListener("change", () => {
+                    boxes.forEach(cb => cb.checked = allBox.checked);
+                    triggerFilters();
+                });
+            }
+
+            handleSelectAll("selectAllYears", "year-checkbox");
+            handleSelectAll("selectAllFunders", "funder-checkbox");
+            handleSelectAll("selectAllPersons", "person-checkbox");
+            handleSelectAll("selectAllStatus", "status-checkbox");
+            handleSelectAll("selectAllAcademies", "academy-checkbox");
+            handleSelectAll("selectAllPrograms", "program-checkbox");
+
+            document.getElementById("applyFilters").addEventListener("click", triggerFilters);
+            document.getElementById("resetFilters").addEventListener("click", () => {
+                document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
                 triggerFilters();
             });
 
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener("change", function () {
-                    if (!this.checked) {
-                        selectAllCheckbox.checked = false;
-                    } else if (Array.from(checkboxes).every(cb => cb.checked)) {
-                        selectAllCheckbox.checked = true;
-                    }
-                    triggerFilters();
-                });
-            });
-        }
-
-        /** 🔹 Kör filtreringen när en checkbox ändras **/
-        function addCheckboxListeners() {
-            document.querySelectorAll("input[type='checkbox']").forEach(cb => {
-                cb.addEventListener("change", triggerFilters);
-            });
-        }
-
-        /** 🔹 Kör filtreringen **/
-        function triggerFilters() {
             updateTotalBudget();
             updateChart();
-        }
-
-        /** 🔹 Hantera återställningsknappen **/
-        document.getElementById("resetFilters").addEventListener("click", function (event) {
-            event.preventDefault();
-
-            // Avmarkera alla checkboxar
-            document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-
-            // Uppdatera filtrering
-            triggerFilters();
         });
+    </script>
 
-        /** 🔹 Koppla checkboxarna för "Alla" till deras listor **/
-        handleSelectAll(document.getElementById("selectAllYears"), document.querySelectorAll(".year-checkbox"));
-        handleSelectAll(document.getElementById("selectAllFunders"), document.querySelectorAll(".funder-checkbox"));
-        handleSelectAll(document.getElementById("selectAllPersons"), document.querySelectorAll(".person-checkbox"));
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const initialLabels = /*[[${chartLabels}]]*/ [];
+        const initialData = /*[[${chartData}]]*/ [];
 
-        /** 🔹 Lägg till event listeners för alla checkboxar **/
-        addCheckboxListeners();
-
-        /** 🔹 Koppla filtreringsknappen **/
-        document.getElementById("applyFilters").addEventListener("click", triggerFilters);
-
-        /** 🔹 Initiera datan när sidan laddas **/
-        updateTotalBudget();
-        updateChart();
-    });
-
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        if (initialLabels.length > 0 && initialData.length > 0) {
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            window.budgetChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: initialLabels,
+                    datasets: [{
+                        label: "Sökta medel",
+                        data: initialData,
+                        backgroundColor: "rgba(54, 162, 235, 0.6)",
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+        /*]]>*/
+    </script>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

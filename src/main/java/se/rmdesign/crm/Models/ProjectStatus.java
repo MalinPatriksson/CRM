@@ -20,6 +20,10 @@ public class ProjectStatus {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @Column(nullable = false)
+    private int weighting = 0; // i procent
+
+
     public ProjectStatus() {
     }
 
@@ -29,14 +33,27 @@ public class ProjectStatus {
         this.project = project;
     }
 
-    // 🔹 Getters & Setters
     public Long getId() { return id; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
 
     public LocalDate getStatusDate() { return statusDate; }
-    public void setStatusDate(LocalDate statusDate) { this.statusDate = statusDate; }
 
     public Project getProject() { return project; }
     public void setProject(Project project) { this.project = project; }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setStatusDate(LocalDate statusDate) {
+        this.statusDate = statusDate;
+    }
+
+    public int getWeighting() {
+        return weighting;
+    }
+
+    public void setWeighting(int weighting) {
+        this.weighting = weighting;
+    }
 }

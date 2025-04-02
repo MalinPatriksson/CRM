@@ -3,12 +3,10 @@ package se.rmdesign.crm.Services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import se.rmdesign.crm.Models.BudgetEntry;
 import se.rmdesign.crm.Models.Project;
 import se.rmdesign.crm.Repos.ProjectRepository;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ProjectService {
@@ -20,6 +18,11 @@ public class ProjectService {
         this.projectRepository = projectRepository;
         this.budgetEntryService = budgetEntryService;
     }
+
+    public Double calculateTotalBudget(Long projectId) {
+        return budgetEntryService.getTotalIncomeForProject(projectId);
+    }
+
 
     public List<Project> getAllProjects(Sort by) {
         return projectRepository.findAll();

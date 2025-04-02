@@ -1,42 +1,41 @@
 package se.rmdesign.crm.Models;
 
 import jakarta.persistence.*;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
+@Table(name = "budget_entries")
 public class BudgetEntry {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String title;
+
     @Column(name = "total", nullable = false)
     private double total;
-
-    @ElementCollection
-    @CollectionTable(name = "budget_entry_values", joinColumns = @JoinColumn(name = "budget_entry_id"))
-    @MapKeyColumn(name = "year")
-    @Column(name = "value", nullable = false)
-    private Map<Integer, Double> values = new HashMap<>();
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    // 🔹 Konstruktorer
+    @OneToMany(mappedBy = "budgetEntry", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<BudgetEntryValue> budgetValues = new ArrayList<>();
+
     public BudgetEntry() {
-        this.values = new HashMap<>();
     }
 
-    public BudgetEntry(Project project, String title, Map<Integer, Double> values) {
+    public BudgetEntry(Project project, String title, double total) {
         this.project = project;
         this.title = title;
-        this.values = (values != null) ? values : new HashMap<>();
+        this.total = total;
     }
 
-    // 🔹 Getter & Setter
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -46,22 +45,16 @@ public class BudgetEntry {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public Map<Integer, Double> getValues() { return values; }
-    public void setValues(Map<Integer, Double> values) {
-        this.values = (values != null) ? values : new HashMap<>();
-    }
+    public double getTotal() { return total; }
+    public void setTotal(double total) { this.total = total; }
 
-    // 🔹 Dynamisk totalberäkning
-    public double getTotal() {
-        return total;
+    public List<BudgetEntryValue> getBudgetValues() {
+        if (budgetValues == null) {
+            budgetValues = new ArrayList<>();
+        }
+        return budgetValues;
     }
-
-    // 🔹 Hämta budget för ett specifikt år
-    public double getBudgetForYear(int year) {
-        return values.getOrDefault(year, 0.0);
-    }
-    // 🔹 Hämta alla år där det finns budgetdata
-    public Set<Integer> getYears() {
-        return values.keySet();
+    public void setBudgetValues(List<BudgetEntryValue> budgetValues) {
+        this.budgetValues = budgetValues != null ? budgetValues : new ArrayList<>();
     }
 }

@@ -7,273 +7,269 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .my-project-table-wrapper {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            padding: 1rem;
+            background-color: #ffffff;
+        }
+        .my-project-table-responsive {
+            width: 100%;
+        }
+        .my-project-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+        }
+        .my-project-table th,
+        .my-project-table td {
+            padding: 12px 20px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .my-project-table th {
+            background-color: #e6f0ff;
+            color: #003366;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #bcd0e0;
+        }
+        .my-project-table tbody tr:hover {
+            background-color: #f2f8ff;
+            cursor: pointer;
+        }
+        .my-project-table td.my-project-name {
+            text-align: left;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+    </style>
 </head>
-
 <body class="bg-light">
+
 <div class="app-container position-relative" style="width: 1600px; height: 1000px; justify-content: center">
-    <a th:href="@{/.}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">Startsida</a>
-
-    <!-- Meddelanderuta för framgång -->
-    <div th:if="${message}" id="alertMessage" class="alert alert-success alert-dismissible fade show custom-alert" role="alert">
-        <p th:text="${message}"></p>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
-    <!-- Meddelanderuta för fel -->
-    <div th:if="${error}" id="alertError" class="alert alert-danger alert-dismissible fade show custom-alert" role="alert">
-        <p th:text="${error}"></p>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
 
     <h1 class="mb-4 text-center">Alla Projekt</h1>
 
-    <!-- Sökrutan -->
+    <!-- Sökfält -->
     <div class="mb-4">
         <form class="d-flex justify-content-center align-items-center">
             <label>
-                <input type="text" id="searchKeyword" class="me-2 search" placeholder="Sök efter projekt eller ansvarig" style="text-align: center;" oninput="filterProjects()">
+                <input type="text" id="searchKeyword" class="me-2 search" placeholder="Sök efter projekt" style="text-align: center;" oninput="filterProjects()">
             </label>
         </form>
     </div>
 
-    <!-- Filtreringssektion -->
+    <!-- Filtrering -->
     <div class="mb-4 d-flex flex-column align-items-center">
-        <div class="d-flex justify-content-center gap-3 w-100 align-items-center">
+        <div class="d-flex flex-wrap justify-content-center gap-3 w-100 align-items-center">
+            <!-- Filtreringsdropdowns -->
+            <!-- År -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterYearBtn" data-bs-toggle="dropdown">Välj år</button>
+                <ul class="dropdown-menu" aria-labelledby="filterYearBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllYears" data-select-class="filter-year" class="me-2"> Alla</label></li>
+                    <li th:each="year : ${years}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-year me-2" th:value="${year}"> <span th:text="${year}"></span></label>
+                    </li>
+                </ul>
+            </div>
             <!-- Projektledare -->
-            <div class="w-25 position-relative">
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="filterProjectManagerBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                        Välj projektledare
-                    </button>
-                    <ul class="dropdown-menu w-100 text-start" aria-labelledby="filterProjectManagerBtn">
-                        <li><label class="dropdown-item"><input type="checkbox" id="selectAllManagers" class="me-2"> Alla</label></li>
-                        <li th:each="manager : ${projectManagers}">
-                            <label class="dropdown-item">
-                                <input type="checkbox" class="filter-project-manager me-2" th:value="${manager}"> <span th:text="${manager}"></span>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterProjectManagerBtn" data-bs-toggle="dropdown">Välj projektledare</button>
+                <ul class="dropdown-menu" aria-labelledby="filterProjectManagerBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllManagers" data-select-class="filter-project-manager" class="me-2"> Alla</label></li>
+                    <li th:each="manager : ${projectManagers}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-project-manager me-2" th:value="${manager}"> <span th:text="${manager}"></span></label>
+                    </li>
+                </ul>
             </div>
-
-            <!-- Finansiärer -->
-            <div class="w-25 position-relative">
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle w-100" type="button" id="filterFundingBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                        Välj finansiärer
-                    </button>
-                    <ul class="dropdown-menu w-100 text-start" aria-labelledby="filterFundingBtn">
-                        <li><label class="dropdown-item"><input type="checkbox" id="selectAllFundings" class="me-2"> Alla</label></li>
-                        <li th:each="funding : ${fundingSources}" th:if="${funding != null and funding != ''}">
-                            <label class="dropdown-item">
-                                <input type="checkbox" class="filter-funding me-2" th:value="${funding}"> <span th:text="${funding}"></span>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
+            <!-- Finansiär -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterFundingBtn" data-bs-toggle="dropdown">Välj finansiär</button>
+                <ul class="dropdown-menu" aria-labelledby="filterFundingBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllFundings" data-select-class="filter-funding" class="me-2"> Alla</label></li>
+                    <li th:each="funding : ${fundingSources}" th:if="${funding != null and funding != ''}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-funding me-2" th:value="${funding}"> <span th:text="${funding}"></span></label>
+                    </li>
+                </ul>
             </div>
-
-            <!-- Budget Range (NU BREDVID DE ANDRA) -->
-            <div class="w-40 position-relative">
-                <div class="d-flex flex-column align-items-center">
-                    <div class="d-flex w-100">
-                        <input type="range" id="minBudgetRange" class="form-range me-2" min="0" max="10000000" step="50000" value="0" oninput="updateBudgetValues()">
-                        <input type="range" id="maxBudgetRange" class="form-range" min="0" max="10000000" step="50000" value="10000000" oninput="updateBudgetValues()">
-                    </div>
-                    <div class="d-flex justify-content-between w-100 mt-2">
-                        <span id="minBudgetValue">Från: <span>0</span> SEK</span>
-                        <span id="maxBudgetValue">Till: <span>10 000 000</span> SEK</span>
-                    </div>
-                </div>
+            <!-- Akademi -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterAcademyBtn" data-bs-toggle="dropdown">Välj akademi</button>
+                <ul class="dropdown-menu" aria-labelledby="filterAcademyBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllAcademies" data-select-class="filter-academy" class="me-2"> Alla</label></li>
+                    <li th:each="academy : ${academies}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-academy me-2" th:value="${academy}"> <span th:text="${academy}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Forskningsprogram -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterProgramBtn" data-bs-toggle="dropdown">Forskningsprogram</button>
+                <ul class="dropdown-menu" aria-labelledby="filterProgramBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllPrograms" data-select-class="filter-program" class="me-2"> Alla</label></li>
+                    <li th:each="program : ${researchPrograms}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-program me-2" th:value="${program}"> <span th:text="${program}"></span></label>
+                    </li>
+                </ul>
+            </div>
+            <!-- Status -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterStatusBtn" data-bs-toggle="dropdown">Välj status</button>
+                <ul class="dropdown-menu" aria-labelledby="filterStatusBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllStatus" data-select-class="filter-status" class="me-2"> Alla</label></li>
+                    <li th:each="status : ${statuses}">
+                        <label class="dropdown-item"><input type="checkbox" class="filter-status me-2" th:value="${status}"> <span th:text="${status}"></span></label>
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <!-- Återställningsknappen centreras under filtren -->
+        <!-- Knapp för att visa graf -->
         <div class="d-flex justify-content-center mt-3">
             <button id="resetFilters" class="btn btn-secondary">Återställ</button>
+            <button id="viewChart" class="btn btn-info text-white ms-3">Visa graf</button>
         </div>
     </div>
 
-    <!-- Tabell med sortering -->
-    <div class="table-responsive fixed-table-container project-table">
-        <table class="table">
-            <thead>
-            <tr>
-                <th>#</th>
-                <th>Projektets namn</th>
-                <th>Ansvarig</th>
-                <th>Deadline</th>
-                <th>Status</th> <!-- ✅ Ny status-kolumn -->
-                <th>Åtgärder</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="project, iterStat : ${projects}">
-                <td th:text="${iterStat.index + 1}"></td>
-                <td>
-                    <a href="#" class="text-primary" data-bs-toggle="modal" th:data-bs-target="'#projectModal'"
-                       th:data-project-id="${project.id}"
-                       th:data-project-name="${project.name}"
-                       th:data-project-manager="${project.manager}"
-                       th:data-project-start="${project.startDate}"
-                       th:data-project-deadline="${project.deadline}"
-                       th:data-project-funding="${project.fundingSource}"
-                       th:data-project-diary="${project.diaryNumber}"
-                       th:data-total-budget="${project.totalBudget}"
-                       th:data-project-status-date="${project.latestStatus?.status}">
-                        <span th:text="${project.name}"></span>
-                    </a>
-                </td>
-                <td th:text="${project.manager}"></td>
-                <td th:text="${project.deadline}"></td>
-                <td th:text="${project.latestStatus?.status}"></td>
-                <td>
-                    <a th:href="@{/edit/{id}(id=${project.id})}" class="btn btn-warning btn-sm d-flex mb-2">Ändra</a>
-                    <a th:href="@{/projects/{id}/budget(id=${project.id})}" class="btn btn-info btn-sm d-flex mb-2">Visa budget</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+    <!-- Tabell -->
+    <div class="my-project-table-wrapper">
+        <div class="my-project-table-responsive">
+            <table class="my-project-table">
+                <thead>
+                <tr>
+                    <th>Projektets namn</th>
+                    <th>Projektledare</th>
+                    <th>Status</th>
+                    <th>Inskickad ansökan</th>
+                    <th>Förväntat svar</th>
+                    <th>Startdatum</th>
+                    <th>Deadline</th>
+                    <th>Total budget</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="project : ${projects}"
+                    th:onclick="'window.location.href=\'/edit/' + ${project.id} + '\';'"
+                    th:attr="data-funding=${project.fundingSource}, data-academy=${project.academy}, data-program=${project.researchProgram}, data-status=${project.latestStatus?.status}, data-diary=${project.diaryNumber}">
+                    <td class="my-project-name" th:text="${project.name}"></td>
+                    <td th:text="${project.manager}"></td>
+                    <td th:text="${project.latestStatus?.status}"></td>
+                    <td th:text="${project.statusDate}"></td>
+                    <td th:text="${project.expectedResponseDate}"></td>
+                    <td th:text="${project.startDate}"></td>
+                    <td th:text="${project.deadline}"></td>
+                    <td th:text="${project.formattedTotalBudget}"></td>
+                </tr>
+                </tbody>
+            </table>
+            <p id="noResultsMessage" class="text-center text-muted mt-3" style="display: none;">Inga projekt matchar dina filter.</p>
+        </div>
     </div>
-
 
     <div class="d-flex mb-3 mt-3">
-        <a th:href="@{/}" class="btn btn-secondary">Tillbaka</a>
-        <a th:href="@{/add-project}" class="btn btn-success">Lägg till projekt</a>
+        <a th:href="@{/add-project}" class="btn btn-success position-absolute" style="top: 10px; left: 10px;">Lägg till projekt</a>
     </div>
 </div>
-
-<!-- Modal för projektinformation -->
-<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white d-flex justify-content-between">
-                <h5 class="modal-title text-center" id="projectModalLabel">Projektinformation</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="fw-semibold mb-0 text-end"> <span id="modalDiaryNumber"></span></p>
-                <div class="card shadow-sm p-4 bg-light border-0">
-                    <h5 class="fw-bold text-primary text-center" id="modalProjectName"></h5>
-
-                    <div class="row text-center mt-3">
-                        <div class="col-md-6">
-                            <p><strong>Ansvarig:</strong> <span id="modalProjectManager"></span></p>
-                            <p><strong>Startdatum:</strong> <span id="modalStartDate"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Deadline:</strong> <span id="modalDeadline"></span></p>
-                            <p><strong>Finansiär:</strong> <span id="modalFunding"></span></p>
-                        </div>
-                    </div>
-
-                    <div class="text-center mt-4 bg-white p-3 rounded shadow-sm">
-                        <h6 class="text-secondary">Total budget</h6>
-                        <p class="fs-4 fw-bold text-primary"><span id="modalTotalBudget"></span></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll("[data-bs-toggle='modal']").forEach(item => {
-            item.addEventListener("click", function () {
-                let modal = document.querySelector("#projectModal");
+        function getCheckedValues(selector) {
+            return Array.from(document.querySelectorAll(selector + ':checked')).map(el => el.value);
+        }
 
-                // Hämta värden från datattribut
-                let projectName = this.getAttribute("data-project-name");
-                let projectManager = this.getAttribute("data-project-manager");
-                let projectStartDate = this.getAttribute("data-project-start");
-                let projectDeadline = this.getAttribute("data-project-deadline");
-                let projectFunding = this.getAttribute("data-project-funding");
-                let projectDiaryNumber = this.getAttribute("data-project-diary");
+        function bindSelectAllCheckbox(selectAllId, checkboxClass) {
+            const selectAll = document.getElementById(selectAllId);
+            if (!selectAll) return;
 
-                // Hämta totalbudget, se till att det är ett korrekt tal
-                let totalBudget = this.getAttribute("data-total-budget");
-                totalBudget = totalBudget && !isNaN(parseFloat(totalBudget)) ? parseFloat(totalBudget.replace(/\s/g, '')) : 0;
-
-                // Fyll modalen med info
-                modal.querySelector("#modalProjectName").textContent = projectName;
-                modal.querySelector("#modalProjectManager").textContent = projectManager;
-                modal.querySelector("#modalStartDate").textContent = projectStartDate;
-                modal.querySelector("#modalDeadline").textContent = projectDeadline;
-                modal.querySelector("#modalFunding").textContent = projectFunding;
-                modal.querySelector("#modalDiaryNumber").textContent = projectDiaryNumber;
-
-                // Formatera totalbudget med svensk tusentalsavgränsning och SEK
-                modal.querySelector("#modalTotalBudget").textContent = totalBudget.toLocaleString("sv-SE") + " SEK";
-            });
-        });
-
-        function applyFilters() {
-            let selectedManagers = Array.from(document.querySelectorAll(".filter-project-manager:checked"))
-                .map(option => option.value);
-            let selectedFundings = Array.from(document.querySelectorAll(".filter-funding:checked"))
-                .map(option => option.value);
-            let minBudget = parseFloat(document.getElementById("minBudgetRange").value) || 0;
-            let maxBudget = Math.min(parseFloat(document.getElementById("maxBudgetRange").value), 10000000) || 10000000;
-            let searchKeyword = document.getElementById("searchKeyword").value.toLowerCase();
-
-            document.querySelectorAll("tbody tr").forEach(row => {
-                let projectName = row.querySelector("td:nth-child(2) span").textContent.toLowerCase();
-                let manager = row.querySelector("td:nth-child(3)").textContent.trim();
-                let funding = row.querySelector("a").getAttribute("data-project-funding");
-                let totalBudget = parseFloat(row.querySelector("a").getAttribute("data-total-budget")) || 0;
-
-                let managerMatch = selectedManagers.length === 0 || selectedManagers.includes(manager);
-                let fundingMatch = selectedFundings.length === 0 || selectedFundings.includes(funding);
-                let budgetMatch = totalBudget >= minBudget && totalBudget <= maxBudget;
-                let searchMatch = projectName.includes(searchKeyword) || manager.toLowerCase().includes(searchKeyword);
-
-                row.style.display = (managerMatch && fundingMatch && budgetMatch && searchMatch) ? "" : "none";
+            selectAll.addEventListener("change", function () {
+                const isChecked = this.checked;
+                document.querySelectorAll("." + checkboxClass).forEach(cb => cb.checked = isChecked);
+                applyFilters();
             });
         }
 
-        // Eventlyssnare för sökrutan (live-filter)
+        function applyFilters() {
+            const selectedManagers = getCheckedValues('.filter-project-manager').map(val => val.toLowerCase());
+            const selectedFundings = getCheckedValues('.filter-funding').map(val => val.toLowerCase());
+            const selectedStatuses = getCheckedValues('.filter-status').map(val => val.toLowerCase());
+            const selectedAcademies = getCheckedValues('.filter-academy').map(val => val.toLowerCase());
+            const selectedPrograms = getCheckedValues('.filter-program').map(val => val.toLowerCase());
+            const selectedYears = getCheckedValues('.filter-year').map(val => val.toLowerCase());
+            const search = document.getElementById("searchKeyword").value.toLowerCase();
+
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const manager = row.querySelector("td:nth-child(2)").textContent.trim().toLowerCase();
+                const status = row.querySelector("td:nth-child(3)").textContent.trim().toLowerCase();
+                const startDateStr = row.querySelector("td:nth-child(6)").textContent.trim();
+                const endDateStr = row.querySelector("td:nth-child(7)").textContent.trim();
+                const funding = row.getAttribute("data-funding")?.toLowerCase() || "";
+                const academy = row.getAttribute("data-academy")?.toLowerCase() || "";
+                const program = row.getAttribute("data-program")?.toLowerCase() || "";
+                const diary = row.getAttribute("data-diary")?.toLowerCase() || "";
+                const name = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
+
+                let activeYears = [];
+                const startYear = startDateStr ? new Date(startDateStr).getFullYear() : null;
+                const endYear = endDateStr ? new Date(endDateStr).getFullYear() : null;
+                if (startYear && endYear) {
+                    for (let y = startYear; y <= endYear; y++) activeYears.push(y.toString());
+                }
+
+                const match = (
+                    (selectedManagers.length === 0 || selectedManagers.includes(manager)) &&
+                    (selectedFundings.length === 0 || selectedFundings.includes(funding)) &&
+                    (selectedStatuses.length === 0 || selectedStatuses.includes(status)) &&
+                    (selectedAcademies.length === 0 || selectedAcademies.includes(academy)) &&
+                    (selectedPrograms.length === 0 || selectedPrograms.includes(program)) &&
+                    (selectedYears.length === 0 || selectedYears.some(y => activeYears.includes(y))) &&
+                    (name.includes(search) || manager.includes(search) || status.includes(search) || funding.includes(search) || academy.includes(search) || program.includes(search) || diary.includes(search))
+                );
+
+                row.style.display = match ? "" : "none";
+            });
+
+            const visibleRows = Array.from(document.querySelectorAll("tbody tr")).filter(row => row.style.display !== "none");
+            document.getElementById("noResultsMessage").style.display = visibleRows.length === 0 ? "block" : "none";
+        }
+
+        // Bindningar
+        ['.filter-project-manager', '.filter-funding', '.filter-status', '.filter-academy', '.filter-program', '.filter-year'].forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => el.addEventListener('change', applyFilters));
+        });
+
         document.getElementById("searchKeyword").addEventListener("input", applyFilters);
+        document.getElementById("resetFilters").addEventListener("click", () => location.reload());
 
-        // Eventlyssnare för filter
-        document.querySelectorAll(".filter-project-manager, .filter-funding").forEach(el => {
-            el.addEventListener("change", applyFilters);
-        });
+        bindSelectAllCheckbox("selectAllManagers", "filter-project-manager");
+        bindSelectAllCheckbox("selectAllFundings", "filter-funding");
+        bindSelectAllCheckbox("selectAllStatus", "filter-status");
+        bindSelectAllCheckbox("selectAllAcademies", "filter-academy");
+        bindSelectAllCheckbox("selectAllPrograms", "filter-program");
+        bindSelectAllCheckbox("selectAllYears", "filter-year");
 
-        // Uppdatera budgetvärden när reglagen ändras
-        document.getElementById("minBudgetRange").addEventListener("input", function () {
-            document.getElementById("minBudgetValue").innerHTML = "Från: " + parseFloat(this.value).toLocaleString("sv-SE") + " SEK";
-            applyFilters();
-        });
+        // 🔹 FIX: Lägg till detta inne i DOMContentLoaded så att getCheckedValues finns tillgänglig
+        document.getElementById("viewChart").addEventListener("click", function () {
+            const params = new URLSearchParams();
+            getCheckedValues(".filter-year").forEach(year => params.append("years", year));
+            getCheckedValues(".filter-project-manager").forEach(mgr => params.append("persons", mgr));
+            getCheckedValues(".filter-funding").forEach(fund => params.append("funders", fund));
+            getCheckedValues(".filter-status").forEach(status => params.append("statuses", status));
+            getCheckedValues(".filter-academy").forEach(academy => params.append("academies", academy));
+            getCheckedValues(".filter-program").forEach(program => params.append("programs", program));
 
-        document.getElementById("maxBudgetRange").addEventListener("input", function () {
-            document.getElementById("maxBudgetValue").innerHTML = "Till: " + parseFloat(this.value).toLocaleString("sv-SE") + " SEK";
-            applyFilters();
-        });
-
-        // Hantera "Alla" för projektledare
-        document.getElementById("selectAllManagers").addEventListener("change", function () {
-            let checked = this.checked;
-            document.querySelectorAll(".filter-project-manager").forEach(el => el.checked = checked);
-            applyFilters();
-        });
-
-        // Hantera "Alla" för finansiärer
-        document.getElementById("selectAllFundings").addEventListener("change", function () {
-            let checked = this.checked;
-            document.querySelectorAll(".filter-funding").forEach(el => el.checked = checked);
-            applyFilters();
-        });
-
-        // Hantera återställningsknappen - laddar om sidan för att återställa allt
-        document.getElementById("resetFilters").addEventListener("click", function () {
-            location.reload(); // Ladda om sidan
+            window.location.href = `/budget?${params.toString()}`;
         });
     });
 </script>
-
 </body>
 </html>

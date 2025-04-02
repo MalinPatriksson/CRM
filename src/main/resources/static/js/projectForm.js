@@ -1,13 +1,30 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // Hantera att lägga till rader
     document.getElementById("addRowBtn").addEventListener("click", addRow);
 
+    // Hantera klick på soptunnan för att ta bort rader
     document.getElementById("budgetTableBody").addEventListener("click", function (event) {
-        if (event.target.closest(".removeRow")) {
-            event.target.closest("tr").remove();
+        if (event.target.closest(".remove-row")) {
+            let row = event.target.closest("tr");
+            let idInput = row.querySelector("input[name*='id']");
+
+            if (idInput && idInput.value) {
+                let deletedInput = document.createElement("input");
+                deletedInput.type = "hidden";
+                deletedInput.name = "deletedBudgetRows";
+                deletedInput.value = idInput.value;
+                document.querySelector("form").appendChild(deletedInput);
+            }
+
+            row.remove();
         }
     });
 
+    // Hantera formulärinsändning
     document.getElementById("projectForm").addEventListener("submit", submitForm);
+
+    // Hantera PDF-uppladdning och förhandsvisning
+    setupPdfHandling();
 });
 
 function addRow() {
@@ -20,12 +37,24 @@ function addRow() {
         <td><input type="text" name="budgetRows[new][Rubrik]" class="form-control"/></td>
         ${[...Array(columnCount - 3)].map(() => `<td><input type="text" class="form-control" name="budgetRows[new][]"/></td>`).join('')}
         <td><input type="text" name="budgetRows[new][Total]" class="form-control"/></td>
-        <td><button type="button" class="btn btn-danger btn-sm removeRow"><i class="bi bi-trash-fill"></i></button></td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm remove-row">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+            <input type="hidden" name="budgetRows[new][id]" value=""/>
+        </td>
     `;
 
     tableBody.appendChild(newRow);
 }
-document.addEventListener("DOMContentLoaded", function () {
+
+function submitForm(event) {
+    // Validering kan läggas till här om nödvändigt
+    console.log("📤 Formuläret skickas...");
+}
+
+// Hantera PDF-uppladdning och förhandsvisning
+function setupPdfHandling() {
     const fileInput = document.getElementById("file");
     const pdfViewer = document.getElementById("pdfViewer");
     const pdfButton = document.getElementById("viewPdfButton");
@@ -54,6 +83,6 @@ document.addEventListener("DOMContentLoaded", function () {
             sessionStorage.setItem("uploadedPdf", fileURL); // 🟢 Sparar filen temporärt i sessionStorage
         }
     });
-});
+}
 
 

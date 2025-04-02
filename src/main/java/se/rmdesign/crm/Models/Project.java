@@ -2,10 +2,11 @@ package se.rmdesign.crm.Models;
 
 import jakarta.persistence.*;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Locale;
 
 @Entity
 public class Project {
@@ -20,61 +21,74 @@ public class Project {
     private String fundingSource;
     private String researchProgram;
     private String diaryNumber;
+    private String academy;
+
+    @Column(nullable = false)  // 🔹 Måste ha ett värde
+    private String currentStatus = "Idé";  // 🔹 Standardvärde
+
+    private LocalDate statusDate = LocalDate.now();
+    private LocalDate expectedResponseDate;
+
     @Transient
     private double totalBudget;
 
-
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProjectStatus> statusHistory;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BudgetEntry> budgetEntries = new ArrayList<>();
 
     public ProjectStatus getLatestStatus() {
         return statusHistory != null && !statusHistory.isEmpty() ?
                 statusHistory.get(statusHistory.size() - 1) : null;
     }
 
-
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BudgetEntry> budgetEntries = new ArrayList<>();
-
-    // Constructors
-    public Project() {}
-
-    public Project(String name, String manager, LocalDate startDate, LocalDate deadline, String fundingSource, String researchProgram, String diaryNumber) {
-        this.name = name;
-        this.manager = manager;
-        this.startDate = startDate;
-        this.deadline = deadline;
-        this.fundingSource = fundingSource;
-        this.researchProgram = researchProgram;
-        this.diaryNumber = diaryNumber;
+    public String getFormattedTotalBudget() {
+        NumberFormat format = NumberFormat.getInstance(new Locale("sv", "SE"));
+        return format.format(getTotalBudget()) + " SEK";
     }
+
+    public String getCurrentStatus() {
+        if (statusHistory != null && !statusHistory.isEmpty()) {
+            return statusHistory.get(statusHistory.size() - 1).getStatus(); // Hämta senaste status-strängen
+        }
+        return "Ej påbörjat"; // Standardvärde om ingen status finns
+    }
+
 
     public double getTotalBudget() {
         return budgetEntries.stream()
-                .filter(entry -> "Totala intäkter".equalsIgnoreCase(entry.getTitle())) // 🔹 Filtrera på rätt typ
-                .mapToDouble(BudgetEntry::getTotal) // 🔹 Använder `getTotal()` istället för att summera `values`
-                .sum(); // 🔹 Summera alla totala intäkter för projektet
+                .filter(entry -> "Totala intäkter".equalsIgnoreCase(entry.getTitle()))
+                .mapToDouble(BudgetEntry::getTotal)
+                .sum();
     }
 
     public void setTotalBudget(double totalBudget) {
         this.totalBudget = totalBudget;
     }
 
-    // Add BudgetEntry to project
-    public void addBudgetEntry(BudgetEntry budgetEntry) {
-        budgetEntries.add(budgetEntry);
-        budgetEntry.setProject(this);
+    public String getAcademy() {
+        return academy;
     }
 
-    public List<BudgetEntry> getBudgetEntries() {
-        return budgetEntries;
+    public void setAcademy(String academy) {
+        this.academy = academy;
     }
 
-    public void setBudgetEntries(List<BudgetEntry> newEntries) {
-        this.budgetEntries.clear();
-        if (newEntries != null) {
-            this.budgetEntries.addAll(newEntries);
-        }
+    public LocalDate getStatusDate() {
+        return statusDate;
+    }
+
+    public void setStatusDate(LocalDate statusDate) {
+        this.statusDate = statusDate;
+    }
+
+    public LocalDate getExpectedResponseDate() {
+        return expectedResponseDate;
+    }
+
+    public void setExpectedResponseDate(LocalDate expectedResponseDate) {
+        this.expectedResponseDate = expectedResponseDate;
     }
 
     public LocalDate getDeadline() {
@@ -139,5 +153,9 @@ public class Project {
 
     public void setDiaryNumber(String diaryNumber) {
         this.diaryNumber = diaryNumber;
+    }
+
+    public void setCurrentStatus(String currentStatus) {
+        this.currentStatus = currentStatus;
     }
 }
