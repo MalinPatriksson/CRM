@@ -13,6 +13,25 @@
 <div class="app-container position-relative" style="width: 1600px; height: auto; justify-content: center">
     <h2 class="text-center mb-3">Ändra Projekt</h2>
 
+    <form th:action="@{/upload-excel-edit}" method="post" enctype="multipart/form-data" class="mb-3">
+        <input type="hidden" name="projectId" th:value="${project.id}" />
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Ladda upp Excel-fil för att ersätta projektdata</h6>
+                <div id="drop-area" class="border rounded p-4 text-center bg-light mb-3">
+                    <p>Dra in en Excel-fil här eller klicka för att välja</p>
+                    <input type="file" id="file" name="file" class="form-control" accept=".xlsx,.xlsm" hidden>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('file').click()">Välj fil</button>
+                    <p id="fileName" class="mt-2 text-muted"></p>
+                </div>
+                <div class="input-group">
+                    <button type="submit" class="btn btn-primary btn-sm">Bearbeta och ersätt</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+
     <form id="projectForm" th:action="@{/projects/save}" method="post" enctype="multipart/form-data" novalidate>
         <input type="hidden" name="id" th:value="${project.id}" />
         <div class="card">
@@ -49,28 +68,50 @@
                                th:value="${project.startDate}" />
                     </div>
                     <div class="col-md-6">
-                        <label for="deadline" class="form-label">Deadline</label>
+                        <label for="deadline" class="form-label">Slutdatum</label>
                         <input type="date" id="deadline" name="deadline" class="form-control required-field"
                                th:value="${project.deadline}" />
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
+                    <!-- Forskningsprogram -->
                     <div class="col-md-6">
                         <label for="researchProgram" class="form-label">Forskningsprogram</label>
                         <input type="text" id="researchProgram" name="researchProgram" class="form-control required-field"
-                               th:value="${project.researchProgram}" />
+                               th:value="${project.researchProgram != null ? project.researchProgram : #strings.replace(extractedData['Forskningsprogram'], ':', '')}" />
                     </div>
-                    <div class="col-md-6">
-                        <label for="academy" class="form-label">Akademi</label>
-                        <select id="academy" name="academy" class="form-select required-field">
-                            <option value="">Välj akademi...</option>
-                            <option value="ITE" th:selected="${project.academy == 'ITE'}">ITE</option>
-                            <option value="FIH" th:selected="${project.academy == 'FIH'}">FIH</option>
-                            <option value="LHS" th:selected="${project.academy == 'LHS'}">LHS</option>
-                            <option value="HOV" th:selected="${project.academy == 'HOV'}">HOV</option>
-                        </select>
+
+                    <!-- Akademi -->
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div>
+                            <label class="form-label d-block">Akademi</label>
+                        <div id="academyCheckboxes" class="d-flex flex-wrap gap-3" data-required-academy="true">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="academies" value="ITE" id="academy-ite"
+                                       th:checked="${project?.academies != null and project.academies.contains('ITE')}">
+                                <label class="form-check-label" for="academy-ite">ITE</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="academies" value="FIH" id="academy-fih"
+                                       th:checked="${project?.academies != null and project.academies.contains('FIH')}">
+                                <label class="form-check-label" for="academy-fih">FIH</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="academies" value="LHS" id="academy-lhs"
+                                       th:checked="${project?.academies != null and project.academies.contains('LHS')}">
+                                <label class="form-check-label" for="academy-lhs">LHS</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="academies" value="HOV" id="academy-hov"
+                                       th:checked="${project?.academies != null and project.academies.contains('HOV')}">
+                                <label class="form-check-label" for="academy-hov">HOV</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                </div>
+
+
 
                 <div class="row g-2 mt-2">
                     <div class="col-md-4">
@@ -150,7 +191,9 @@
 
                 <div class="mt-3 text-center">
                     <button type="submit" class="btn btn-success">Spara ändringar</button>
-                    <a th:href="@{/projects}" class="btn btn-secondary">Tillbaka</a>
+                    <a th:href="@{'/projects/export'(id=${project.id})}" class="btn btn-warning ms-3">Exportera</a>
+                    <a th:href="@{/projects}" class="btn btn-secondary ms-3">Tillbaka</a>
+
                 </div>
             </div>
         </div>
@@ -179,6 +222,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -191,6 +235,7 @@
         const missingFieldsList = document.getElementById("missingFieldsList");
         const confirmSaveButton = document.getElementById("confirmSaveButton");
 
+        // Uppdatera viktningens färg och text
         function updateWeightingBar(value) {
             const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
             weightingBar.style.width = safeValue + "%";
@@ -198,6 +243,7 @@
             weightingText.innerText = safeValue + "%";
         }
 
+        // Sätt viktning baserat på statusval
         function updateWeighting() {
             let percentage = parseInt(weightingInput.value);
 
@@ -211,33 +257,26 @@
             updateWeightingBar(percentage);
         }
 
+        // Validera formuläret innan sparning
         function validateForm(event) {
-            event.preventDefault(); // Stoppa formulärskick direkt
-
+            event.preventDefault();
             let missingFields = [];
             let isValid = true;
 
+            // 🔹 Validera vanliga required-fields (inputs/selects)
             requiredFields.forEach(field => {
                 let value = field.value;
 
-                // Hantera olika typer av fält
                 if (field.tagName === "SELECT") {
                     value = field.options[field.selectedIndex]?.value || "";
-                } else if (field.type === "date" || field.type === "number" || field.type === "text") {
+                } else if (["date", "number", "text"].includes(field.type)) {
                     value = value?.toString().trim();
                 }
 
                 if (!value) {
                     field.classList.add("is-invalid");
-
-                    // 🔍 Hitta label på ett säkert sätt
-                    let label = document.querySelector(`label[for="${field.id}"]`);
-
-                    if (!label) {
-                        // fallback – leta inom samma kolumn
-                        label = field.closest(".col, .col-md-1, .col-md-2, .col-md-4, .col-md-6")?.querySelector("label");
-                    }
-
+                    let label = document.querySelector(`label[for="${field.id}"]`) ||
+                        field.closest(".col, .col-md-1, .col-md-2, .col-md-4, .col-md-6")?.querySelector("label");
                     const labelText = label?.innerText?.trim() || "Okänt fält";
                     missingFields.push(labelText);
                     isValid = false;
@@ -246,28 +285,72 @@
                 }
             });
 
+            // 🔹 Kontrollera att minst en akademi är vald
+            const academyContainer = document.querySelector('[data-required-academy]');
+            const checkboxes = academyContainer.querySelectorAll('input[type="checkbox"]');
+            const oneChecked = Array.from(checkboxes).some(cb => cb.checked);
+            if (!oneChecked) {
+                academyContainer.classList.add("border", "border-danger", "rounded");
+                missingFields.push("Akademi (minst en måste väljas)");
+                isValid = false;
+            } else {
+                academyContainer.classList.remove("border", "border-danger", "rounded");
+            }
+
+            // 🔹 Visa modal eller skicka formuläret
             if (!isValid) {
-                missingFieldsList.innerHTML = missingFields.map(field => `<li>${field}</li>`).join("");
-                const missingModal = new bootstrap.Modal(document.getElementById("missingFieldsModal"));
-                missingModal.show();
+                missingFieldsList.innerHTML = missingFields.map(f => `<li>${f}</li>`).join("");
+                new bootstrap.Modal(document.getElementById("missingFieldsModal")).show();
             } else {
                 projectForm.submit();
             }
         }
 
-
-        // Event listeners
+        // Event listeners för status, weighting och form
         statusSelect.addEventListener("change", updateWeighting);
         weightingInput.addEventListener("input", () => updateWeightingBar(weightingInput.value));
         projectForm.addEventListener("submit", validateForm);
-        confirmSaveButton.addEventListener("click", function () {
-            projectForm.submit(); // Tvinga igenom spara trots varningar
-        });
+        confirmSaveButton.addEventListener("click", () => projectForm.submit());
 
-        // Initiering vid sidladdning
-        updateWeighting(); // Sätt procent utifrån status
-        updateWeightingBar(weightingInput.value); // Säkerställ baren stämmer från start
+        // Initiering
+        updateWeighting();
+        updateWeightingBar(weightingInput.value);
+
+        // Drag & Drop för Excel (om uppladdningsdelen finns)
+        const dropArea = document.getElementById("drop-area");
+        const fileInput = document.getElementById("file");
+        const fileNameDisplay = document.getElementById("fileName");
+
+        if (dropArea && fileInput && fileNameDisplay) {
+            dropArea.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropArea.classList.add("border-primary");
+            });
+
+            dropArea.addEventListener("dragleave", () => {
+                dropArea.classList.remove("border-primary");
+            });
+
+            dropArea.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropArea.classList.remove("border-primary");
+                const droppedFile = e.dataTransfer.files[0];
+                if (droppedFile && (droppedFile.name.endsWith(".xlsx") || droppedFile.name.endsWith(".xlsm"))) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileNameDisplay.textContent = "Vald fil: " + droppedFile.name;
+                } else {
+                    alert("Endast .xlsx eller .xlsm-filer stöds.");
+                }
+            });
+
+            fileInput.addEventListener("change", () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = "Vald fil: " + fileInput.files[0].name;
+                }
+            });
+        }
     });
 </script>
+
 </body>
 </html>

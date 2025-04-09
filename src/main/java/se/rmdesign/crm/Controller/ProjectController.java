@@ -1,5 +1,9 @@
 package se.rmdesign.crm.Controller;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,6 +18,8 @@ import se.rmdesign.crm.Models.Project;
 import se.rmdesign.crm.Models.ProjectStatus;
 import se.rmdesign.crm.Services.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
@@ -39,11 +45,6 @@ public class ProjectController {
         this.budgetEntryService = budgetEntryService;
         this.projectStatusService = projectStatusService;
         this.budgetEntryValueService = budgetEntryValueService;
-    }
-
-    @GetMapping("/")
-    public String startPage() {
-        return "start";
     }
 
     @GetMapping("/projects")
@@ -90,9 +91,9 @@ public class ProjectController {
                     }
                     return Stream.empty();
                 })
-                .collect(Collectors.toCollection(TreeSet::new)); // sorterad lista
+                .collect(Collectors.toCollection(TreeSet::new));
 
-        // 🔹 Övriga filterdata
+
         Set<String> projectManagers = projects.stream()
                 .map(Project::getManager)
                 .filter(Objects::nonNull)
@@ -104,9 +105,10 @@ public class ProjectController {
                 .collect(Collectors.toSet());
 
         Set<String> academies = projects.stream()
-                .map(Project::getAcademy)
+                .map(Project::getAcademies)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .flatMap(List::stream)
+                .collect(Collectors.toCollection(TreeSet::new));
 
         Set<String> researchPrograms = projects.stream()
                 .map(Project::getResearchProgram)
@@ -149,7 +151,7 @@ public class ProjectController {
             @RequestParam String fundingSource,
             @RequestParam String researchProgram,
             @RequestParam String diaryNumber,
-            @RequestParam(required = false) String academy,
+            @RequestParam(name = "academies", required = false) List<String> academies,
             @RequestParam Map<String, String> budgetRows,
             @RequestParam String status,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate statusDate,
@@ -168,7 +170,7 @@ public class ProjectController {
         project.setFundingSource(fundingSource);
         project.setResearchProgram(researchProgram);
         project.setDiaryNumber(diaryNumber);
-        project.setAcademy(academy); // ✅ Akademi
+        project.setAcademies(academies); // ✅ Akademi
         project.setExpectedResponseDate(expectedResponseDate); // ✅ Förväntat svar
         project.setStatusDate(statusDate); // ✅ Statusdatum
 
@@ -185,11 +187,22 @@ public class ProjectController {
 
         ProjectStatus latestStatus = projectStatusService.getLatestStatus(savedProject.getId());
 
-        if (latestStatus == null || !latestStatus.getStatus().equals(status) || !latestStatus.getStatusDate().equals(statusDate)) {
-            ProjectStatus newStatus = new ProjectStatus(status, statusDate, savedProject);
-            newStatus.setWeighting(weighting != null ? weighting : 0); // ✅ Viktning
-            projectStatusService.saveProjectStatus(newStatus);
+        if (latestStatus == null
+                || !latestStatus.getStatus().equals(status)
+                || !latestStatus.getStatusDate().equals(statusDate)
+                || !Objects.equals(latestStatus.getWeighting(), weighting)) {
+
+            if (latestStatus == null) {
+                latestStatus = new ProjectStatus(status, statusDate, savedProject);
+            } else {
+                latestStatus.setStatus(status);
+                latestStatus.setStatusDate(statusDate);
+            }
+            latestStatus.setWeighting(weighting != null ? weighting : 0);
+            projectStatusService.saveProjectStatus(latestStatus);
         }
+
+
 
         // ✅ Uppdatera currentStatus i Project-tabellen
         ProjectStatus latestStatusAfterSave = projectStatusService.getLatestStatus(savedProject.getId());
@@ -238,14 +251,27 @@ public class ProjectController {
     @PostMapping("/upload-excel")
     public String uploadExcel(@RequestParam("file") MultipartFile file, Model model) {
         try {
+            // Kontroll: bara .xlsx eller .xlsm tillåts
+            String filename = file.getOriginalFilename();
+            if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xlsm"))) {
+                model.addAttribute("errorMessage", "Endast Excel-filer med .xlsx eller .xlsm stöds.");
+                System.out.println("Filtyp: " + file.getContentType());
+                System.out.println("Filnamn: " + file.getOriginalFilename());
+
+                return "add-project";
+            }
+
             Map<String, Object> extractedData = excelService.processExcelFile(file);
             model.addAttribute("extractedData", extractedData);
-            return "add-project"; // Samma template som PDF-formuläret
+            return "add-project"; // Visa samma formulär igen med ifyllda värden
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Fel vid bearbetning av Excel-filen: " + e.getMessage());
             return "error";
         }
     }
+
+
+
 
     @PostMapping("/add")
     public String addProject(
@@ -257,7 +283,7 @@ public class ProjectController {
             @RequestParam String fundingSource,
             @RequestParam String researchProgram,
             @RequestParam String diaryNumber,
-            @RequestParam String academy,
+            @RequestParam(name = "academies", required = false) List<String> academies,
             @RequestParam Map<String, String> budgetRows,
             @RequestParam String status,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate statusDate,
@@ -276,7 +302,7 @@ public class ProjectController {
         project.setFundingSource(fundingSource);
         project.setResearchProgram(researchProgram);
         project.setDiaryNumber(diaryNumber);
-        project.setAcademy(academy);
+        project.setAcademies(academies);
         project.setExpectedResponseDate(expectedResponseDate);
         project.setStatusDate(statusDate);
 
@@ -317,6 +343,72 @@ public class ProjectController {
         redirectAttributes.addFlashAttribute("message", "Projektet \"" + name + "\" har lagts till!");
         return "redirect:/projects";
     }
+
+    @PostMapping("/upload-excel-edit")
+    public String uploadExcelEdit(@RequestParam("file") MultipartFile file,
+                                  @RequestParam("projectId") Long projectId,
+                                  Model model) {
+        try {
+            String filename = file.getOriginalFilename();
+            if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xlsm"))) {
+                model.addAttribute("errorMessage", "Endast Excel-filer med .xlsx eller .xlsm stöds.");
+                return "edit-project";
+            }
+
+            Map<String, Object> extractedData = excelService.processExcelFile(file);
+            Project project = projectService.getProjectById(projectId);
+            if (project == null) {
+                model.addAttribute("errorMessage", "Projektet kunde inte hittas.");
+                return "error";
+            }
+
+            // 🟢 Skriv endast över om värde finns i filen
+            if (extractedData.get("Projektnamn") != null)
+                project.setName((String) extractedData.get("Projektnamn"));
+
+            if (extractedData.get("Diarienummer") != null)
+                project.setDiaryNumber((String) extractedData.get("Diarienummer"));
+
+            if (extractedData.get("Projektledares för- och efternamn") != null)
+                project.setManager((String) extractedData.get("Projektledares för- och efternamn"));
+
+            if (extractedData.get("Finansiär") != null)
+                project.setFundingSource((String) extractedData.get("Finansiär"));
+
+            LocalDate startDate = parseDate(extractedData.get("Startdatum"));
+            if (startDate != null)
+                project.setStartDate(startDate);
+
+            LocalDate deadline = parseDate(extractedData.get("Deadline"));
+            if (deadline != null)
+                project.setDeadline(deadline);
+
+            if (extractedData.get("Forskningsprogram") != null)
+                project.setResearchProgram((String) extractedData.get("Forskningsprogram"));
+
+            // 🟢 Skicka vidare till formuläret med ifyllda fält
+            model.addAttribute("project", project);
+            model.addAttribute("budgetRows", extractedData.get("BudgetRows"));
+            model.addAttribute("years", extractedData.get("Years"));
+
+            // 👇 Behåll status om den redan finns
+            ProjectStatus currentStatus = projectStatusService.getLatestStatus(projectId);
+            LocalDate statusDate = (currentStatus != null) ? currentStatus.getStatusDate() : LocalDate.now();
+            model.addAttribute("currentStatus", (currentStatus != null) ? currentStatus.getStatus() : "Idé");
+            model.addAttribute("statusDate", statusDate);
+            model.addAttribute("statusHistory", projectStatusService.getStatusHistory(projectId));
+            Integer weighting = (currentStatus != null) ? currentStatus.getWeighting() : 0;
+            model.addAttribute("currentStatusWeighting", weighting);
+
+
+            return "edit-project";
+
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Fel vid bearbetning av Excel-filen: " + e.getMessage());
+            return "error";
+        }
+    }
+
 
 
     @GetMapping("/edit/{id}")
@@ -378,6 +470,8 @@ public class ProjectController {
         model.addAttribute("currentStatus", (currentStatus != null) ? currentStatus.getStatus() : "Idé");
         model.addAttribute("statusDate", statusDate);
         model.addAttribute("statusHistory", statusHistory);
+        model.addAttribute("currentStatusWeighting", (currentStatus != null) ? currentStatus.getWeighting() : 0);
+
 
         return "edit-project";
     }
@@ -389,4 +483,96 @@ public class ProjectController {
         redirectAttributes.addFlashAttribute("message", "Projektet har tagits bort!");
         return "redirect:/projects";
     }
+
+    @GetMapping("/export")
+    public void exportFilteredProjects(@RequestParam Map<String, String> filters, HttpServletResponse response) throws IOException {
+        // 1. Filtrera projekt (samma logik som din översiktssida)
+        List<Project> filteredProjects = projectService.filterProjects(filters);
+
+        // 2. Ladda in Excel-mall
+        InputStream templateStream = getClass().getResourceAsStream("/templates/excel-template.xlsx");
+        XSSFWorkbook workbook = new XSSFWorkbook(templateStream);
+
+        // 3. För varje projekt – duplicera blad och fyll i data
+        for (Project project : filteredProjects) {
+            Sheet sheet = workbook.cloneSheet(0);
+            workbook.setSheetName(workbook.getSheetIndex(sheet), project.getName());
+
+            projectService.fillProjectToSheet(project, sheet); // En metod som fyller in fält i rätt celler
+        }
+
+        // 4. Ta bort mallbladet
+        workbook.removeSheetAt(0);
+
+        // 5. Skicka tillbaka filen som nedladdning
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=projekt-export.xlsx");
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+
+    @PostMapping("/projects/export")
+    public void exportProjects(@RequestParam Map<String, String> allParams, HttpServletResponse response) throws IOException {
+        List<Project> filtered = projectService.filterProjects(allParams);
+
+        Workbook workbook = new XSSFWorkbook();
+        Set<String> usedNames = new HashSet<>();
+
+        for (Project p : filtered) {
+            String baseName = p.getName().length() > 31 ? p.getName().substring(0, 31) : p.getName();
+            String sheetName = baseName;
+            int counter = 1;
+
+            while (usedNames.contains(sheetName)) {
+                sheetName = (baseName.length() > 28 ? baseName.substring(0, 28) : baseName) + " (" + counter++ + ")";
+            }
+
+            usedNames.add(sheetName);
+            Sheet sheet = workbook.createSheet(sheetName);
+            projectService.fillProjectToSheet(p, sheet);
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=exporterade_projekt.xlsx");
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+
+
+    @GetMapping("/projects/export")
+    public void exportSingleProject(@RequestParam Long id, HttpServletResponse response) throws IOException {
+        Project project = projectService.getProjectById(id);
+        projectService.exportSingleProject(project, response);
+    }
+
+    @GetMapping("/projects/exportAll")
+    public void exportAllProjects(HttpServletResponse response) throws IOException {
+        List<Project> projects = projectService.getAllProjects(); // Retrieve the list of projects
+
+        Workbook workbook = new XSSFWorkbook();
+        for (Project project : projects) {
+            Sheet sheet = workbook.createSheet(
+                    project.getName().substring(0, Math.min(31, project.getName().length()))
+            );
+            projectService.fillProjectToSheet(project, sheet);
+        }
+
+        response.setContentType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        response.setHeader("Content-Disposition", "attachment; filename=all_projects.xlsx");
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+
+    private LocalDate parseDate(Object value) {
+        if (value == null) return null;
+        try {
+            return LocalDate.parse(value.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
 }

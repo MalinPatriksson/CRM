@@ -51,7 +51,8 @@ public class BudgetController {
                 boolean matchesFunder = (funders == null || funders.isEmpty()) || funders.contains(project.getFundingSource());
                 boolean matchesPerson = (persons == null || persons.isEmpty()) || persons.contains(project.getManager());
                 boolean matchesStatus = (statuses == null || statuses.isEmpty()) || statuses.contains(project.getCurrentStatus());
-                boolean matchesAcademy = (academies == null || academies.isEmpty()) || academies.contains(project.getAcademy());
+                boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
+                        project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
 
                 if (matchesYear && matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
@@ -86,7 +87,7 @@ public class BudgetController {
         String selectedStatusLabel = (statuses == null || statuses.isEmpty()) ? "" : "Status: " + String.join(", ", statuses);
         model.addAttribute("selectedStatusLabel", selectedStatusLabel);
         model.addAttribute("academies", projects.stream()
-                .map(Project::getAcademy)
+                .map(Project::getAcademies)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet()));
 
@@ -128,7 +129,8 @@ public class BudgetController {
                 boolean matchesFunder = (funders == null || funders.isEmpty()) || funders.contains(project.getFundingSource());
                 boolean matchesPerson = (persons == null || persons.isEmpty()) || persons.contains(project.getManager());
                 boolean matchesStatus = (statuses == null || statuses.isEmpty()) || statuses.contains(project.getCurrentStatus());
-                boolean matchesAcademy = (academies == null || academies.isEmpty()) || academies.contains(project.getAcademy());
+                boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
+                        project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
 
                 if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
@@ -180,7 +182,8 @@ public class BudgetController {
                 boolean matchesFunder = (funders == null || funders.isEmpty()) || funders.contains(project.getFundingSource());
                 boolean matchesPerson = (persons == null || persons.isEmpty()) || persons.contains(project.getManager());
                 boolean matchesStatus = (statuses == null || statuses.isEmpty()) || statuses.contains(project.getCurrentStatus());
-                boolean matchesAcademy = (academies == null || academies.isEmpty()) || academies.contains(project.getAcademy());         // ✅
+                boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
+                        project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());    // ✅
 
                 if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
