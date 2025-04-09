@@ -136,6 +136,23 @@
                     </div>
                 </div>
 
+                <table class="table table-sm table-bordered mt-2 text-center align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 33%;">Status</th>
+                        <th style="width: 33%;">Datum</th>
+                        <th style="width: 34%;">Viktning (%)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="status : ${statusHistory}">
+                        <td th:text="${status.status}"></td>
+                        <td th:text="${status.statusDate}"></td>
+                        <td th:text="${status.weighting}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+
                 <div class="row justify-content-center align-items-center mt-4">
                     <div class="col-md-2 text-end">
                         <label for="weighting" class="form-label mb-0">Viktning (%)</label>
@@ -223,7 +240,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const statusSelect = document.getElementById("status");
@@ -235,7 +251,75 @@
         const missingFieldsList = document.getElementById("missingFieldsList");
         const confirmSaveButton = document.getElementById("confirmSaveButton");
 
-        // Uppdatera viktningens färg och text
+        // 🔁 Budgetauto-uppdatering
+        const budgetTableBody = document.getElementById("budgetTableBody");
+        budgetTableBody.querySelectorAll("input").forEach(input => {
+            input.addEventListener("input", () => {
+                updateRowTotal(input);
+                updateTotalIncomeRow();
+            });
+        });
+
+        // 🔁 Beräkna totalsumma för en rad
+        function updateRowTotal(input) {
+            const row = input.closest("tr");
+            const inputs = row.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
+            let sum = 0;
+            inputs.forEach(cell => {
+                const value = parseFloat(cell.value.replace(/\s/g, '').replace(',', '.'));
+                if (!isNaN(value)) sum += value;
+            });
+
+            const totalInput = row.querySelector("td input[name*='Total']");
+            if (totalInput) {
+                totalInput.value = Math.round(sum).toLocaleString("sv-SE");
+            }
+        }
+
+        // 🔁 Summera Totala intäkter (sista raden) + dess total
+        function updateTotalIncomeRow() {
+            const rows = Array.from(budgetTableBody.querySelectorAll("tr"));
+            if (rows.length === 0) return;
+
+            const lastRow = rows[rows.length - 1];
+            const yearInputs = lastRow.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
+
+            for (let col = 0; col < yearInputs.length; col++) {
+                let sum = 0;
+                for (let i = 0; i < rows.length - 1; i++) {
+                    const input = rows[i].querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])")[col];
+                    const value = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
+                    if (!isNaN(value)) sum += value;
+                }
+                yearInputs[col].value = Math.round(sum).toLocaleString("sv-SE");
+                yearInputs[col].readOnly = true;
+                yearInputs[col].classList.add("bg-light");
+            }
+
+            const totalInput = lastRow.querySelector("td input[name*='Total']");
+            let totalSum = 0;
+            yearInputs.forEach(input => {
+                const val = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
+                if (!isNaN(val)) totalSum += val;
+            });
+            totalInput.value = Math.round(totalSum).toLocaleString("sv-SE");
+            totalInput.readOnly = true;
+            totalInput.classList.add("bg-light");
+        }
+
+        // 🔁 Lås och gråmarkera Total-kolumnen
+        function lockTotalColumn() {
+            const totalInputs = budgetTableBody.querySelectorAll("td input[name*='[Total]']");
+            totalInputs.forEach(input => {
+                input.readOnly = true;
+                input.classList.add("bg-light");
+            });
+        }
+
+        lockTotalColumn();
+        updateTotalIncomeRow();
+
+        // 📊 Viktning progressbar
         function updateWeightingBar(value) {
             const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
             weightingBar.style.width = safeValue + "%";
@@ -243,40 +327,33 @@
             weightingText.innerText = safeValue + "%";
         }
 
-        // Sätt viktning baserat på statusval
         function updateWeighting() {
             let percentage = parseInt(weightingInput.value);
-
             if (statusSelect.value === "Beviljat") {
                 percentage = 100;
             } else if (statusSelect.value === "Avslag") {
                 percentage = 0;
             }
-
             weightingInput.value = percentage;
             updateWeightingBar(percentage);
         }
 
-        // Validera formuläret innan sparning
         function validateForm(event) {
             event.preventDefault();
             let missingFields = [];
             let isValid = true;
 
-            // 🔹 Validera vanliga required-fields (inputs/selects)
             requiredFields.forEach(field => {
                 let value = field.value;
-
                 if (field.tagName === "SELECT") {
                     value = field.options[field.selectedIndex]?.value || "";
                 } else if (["date", "number", "text"].includes(field.type)) {
                     value = value?.toString().trim();
                 }
-
                 if (!value) {
                     field.classList.add("is-invalid");
-                    let label = document.querySelector(`label[for="${field.id}"]`) ||
-                        field.closest(".col, .col-md-1, .col-md-2, .col-md-4, .col-md-6")?.querySelector("label");
+                    const label = document.querySelector(`label[for="${field.id}"]`) ||
+                        field.closest(".col")?.querySelector("label");
                     const labelText = label?.innerText?.trim() || "Okänt fält";
                     missingFields.push(labelText);
                     isValid = false;
@@ -285,7 +362,6 @@
                 }
             });
 
-            // 🔹 Kontrollera att minst en akademi är vald
             const academyContainer = document.querySelector('[data-required-academy]');
             const checkboxes = academyContainer.querySelectorAll('input[type="checkbox"]');
             const oneChecked = Array.from(checkboxes).some(cb => cb.checked);
@@ -297,7 +373,6 @@
                 academyContainer.classList.remove("border", "border-danger", "rounded");
             }
 
-            // 🔹 Visa modal eller skicka formuläret
             if (!isValid) {
                 missingFieldsList.innerHTML = missingFields.map(f => `<li>${f}</li>`).join("");
                 new bootstrap.Modal(document.getElementById("missingFieldsModal")).show();
@@ -306,17 +381,15 @@
             }
         }
 
-        // Event listeners för status, weighting och form
         statusSelect.addEventListener("change", updateWeighting);
         weightingInput.addEventListener("input", () => updateWeightingBar(weightingInput.value));
         projectForm.addEventListener("submit", validateForm);
         confirmSaveButton.addEventListener("click", () => projectForm.submit());
 
-        // Initiering
         updateWeighting();
         updateWeightingBar(weightingInput.value);
 
-        // Drag & Drop för Excel (om uppladdningsdelen finns)
+        // Drag & drop uppladdning
         const dropArea = document.getElementById("drop-area");
         const fileInput = document.getElementById("file");
         const fileNameDisplay = document.getElementById("fileName");
@@ -351,6 +424,7 @@
         }
     });
 </script>
+
 
 </body>
 </html>
