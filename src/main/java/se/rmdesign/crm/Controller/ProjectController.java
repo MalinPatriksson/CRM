@@ -192,16 +192,14 @@ public class ProjectController {
                 || !latestStatus.getStatusDate().equals(statusDate)
                 || !Objects.equals(latestStatus.getWeighting(), weighting)) {
 
-            if (latestStatus == null) {
-                latestStatus = new ProjectStatus(status, statusDate, savedProject);
-            } else {
-                latestStatus.setStatus(status);
-                latestStatus.setStatusDate(statusDate);
-            }
-            latestStatus.setWeighting(weighting != null ? weighting : 0);
-            projectStatusService.saveProjectStatus(latestStatus);
-        }
+            ProjectStatus newStatus = new ProjectStatus();
+            newStatus.setProject(savedProject);
+            newStatus.setStatus(status);
+            newStatus.setStatusDate(statusDate);
+            newStatus.setWeighting(weighting != null ? weighting : 0);
 
+            projectStatusService.saveProjectStatus(newStatus);
+        }
 
 
         // ✅ Uppdatera currentStatus i Project-tabellen
@@ -411,70 +409,70 @@ public class ProjectController {
 
 
 
-    @GetMapping("/edit/{id}")
-    public String showEditProjectForm(@PathVariable Long id, Model model) {
-        Project project = projectService.getProjectById(id);
+        @GetMapping("/edit/{id}")
+        public String showEditProjectForm(@PathVariable Long id, Model model) {
+            Project project = projectService.getProjectById(id);
 
-        if (project == null) {
-            return "redirect:/projects";
-        }
-
-        // Hämta budgetposter och dess värden
-        List<BudgetEntry> budgetEntries = budgetEntryService.findByProject(project);
-        for (BudgetEntry entry : budgetEntries) {
-            List<BudgetEntryValue> budgetValues = budgetEntryValueService.findByBudgetEntry(entry);
-            entry.setBudgetValues(budgetValues);
-        }
-
-        // Formatterare med mellanslag och utan decimaler
-        DecimalFormat formatter = new DecimalFormat("#,###");
-        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
-        symbols.setGroupingSeparator(' ');
-        formatter.setDecimalFormatSymbols(symbols);
-
-        // Skapa map med rader för HTML-formuläret
-        List<Map<String, String>> budgetRows = new ArrayList<>();
-
-        for (BudgetEntry entry : budgetEntries) {
-            Map<String, String> row = new HashMap<>();
-            row.put("Rubrik", entry.getTitle());
-
-            double total = 0.0;
-            for (BudgetEntryValue value : entry.getBudgetValues()) {
-                String year = String.valueOf(value.getYear());
-                total += value.getValue();
-                row.put(year, formatter.format(value.getValue()));
+            if (project == null) {
+                return "redirect:/projects";
             }
 
-            row.put("Total", formatter.format(total));
-            budgetRows.add(row);
+            // Hämta budgetposter och dess värden
+            List<BudgetEntry> budgetEntries = budgetEntryService.findByProject(project);
+            for (BudgetEntry entry : budgetEntries) {
+                List<BudgetEntryValue> budgetValues = budgetEntryValueService.findByBudgetEntry(entry);
+                entry.setBudgetValues(budgetValues);
+            }
+
+            // Formatterare med mellanslag och utan decimaler
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+            symbols.setGroupingSeparator(' ');
+            formatter.setDecimalFormatSymbols(symbols);
+
+            // Skapa map med rader för HTML-formuläret
+            List<Map<String, String>> budgetRows = new ArrayList<>();
+
+            for (BudgetEntry entry : budgetEntries) {
+                Map<String, String> row = new HashMap<>();
+                row.put("Rubrik", entry.getTitle());
+
+                double total = 0.0;
+                for (BudgetEntryValue value : entry.getBudgetValues()) {
+                    String year = String.valueOf(value.getYear());
+                    total += value.getValue();
+                    row.put(year, formatter.format(value.getValue()));
+                }
+
+                row.put("Total", formatter.format(total));
+                budgetRows.add(row);
+            }
+
+            // Hämta unika år från alla värden
+            Set<Integer> yearsSet = budgetEntries.stream()
+                    .flatMap(entry -> entry.getBudgetValues().stream())
+                    .map(BudgetEntryValue::getYear)
+                    .collect(Collectors.toCollection(TreeSet::new));
+
+            List<Integer> years = new ArrayList<>(yearsSet);
+
+            // Hämta aktuell status och historik
+            ProjectStatus currentStatus = projectStatusService.getLatestStatus(id);
+            LocalDate statusDate = (currentStatus != null) ? currentStatus.getStatusDate() : LocalDate.now();
+            List<ProjectStatus> statusHistory = projectStatusService.getStatusHistory(id);
+
+            model.addAttribute("project", project);
+            model.addAttribute("budgetEntries", budgetEntries);
+            model.addAttribute("budgetRows", budgetRows);
+            model.addAttribute("years", years);
+            model.addAttribute("currentStatus", (currentStatus != null) ? currentStatus.getStatus() : "Idé");
+            model.addAttribute("statusDate", statusDate);
+            model.addAttribute("statusHistory", statusHistory);
+            model.addAttribute("currentStatusWeighting", (currentStatus != null) ? currentStatus.getWeighting() : 0);
+
+
+            return "edit-project";
         }
-
-        // Hämta unika år från alla värden
-        Set<Integer> yearsSet = budgetEntries.stream()
-                .flatMap(entry -> entry.getBudgetValues().stream())
-                .map(BudgetEntryValue::getYear)
-                .collect(Collectors.toCollection(TreeSet::new));
-
-        List<Integer> years = new ArrayList<>(yearsSet);
-
-        // Hämta aktuell status och historik
-        ProjectStatus currentStatus = projectStatusService.getLatestStatus(id);
-        LocalDate statusDate = (currentStatus != null) ? currentStatus.getStatusDate() : LocalDate.now();
-        List<ProjectStatus> statusHistory = projectStatusService.getStatusHistory(id);
-
-        model.addAttribute("project", project);
-        model.addAttribute("budgetEntries", budgetEntries);
-        model.addAttribute("budgetRows", budgetRows);
-        model.addAttribute("years", years);
-        model.addAttribute("currentStatus", (currentStatus != null) ? currentStatus.getStatus() : "Idé");
-        model.addAttribute("statusDate", statusDate);
-        model.addAttribute("statusHistory", statusHistory);
-        model.addAttribute("currentStatusWeighting", (currentStatus != null) ? currentStatus.getWeighting() : 0);
-
-
-        return "edit-project";
-    }
 
 
     @PostMapping("/{id}/delete-project")
