@@ -21,7 +21,14 @@ public class Project {
     private String fundingSource;
     private String researchProgram;
     private String diaryNumber;
-    private String academy;
+    @ElementCollection
+    @CollectionTable(
+            name = "project_academies",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    @Column(name = "academy")
+    private List<String> academies = new ArrayList<>();
+
 
     @Column(nullable = false)  // 🔹 Måste ha ett värde
     private String currentStatus = "Idé";  // 🔹 Standardvärde
@@ -67,12 +74,12 @@ public class Project {
         this.totalBudget = totalBudget;
     }
 
-    public String getAcademy() {
-        return academy;
+    public List<String> getAcademies() {
+        return academies;
     }
 
-    public void setAcademy(String academy) {
-        this.academy = academy;
+    public void setAcademies(List<String> academies) {
+        this.academies = academies;
     }
 
     public LocalDate getStatusDate() {
@@ -158,4 +165,9 @@ public class Project {
     public void setCurrentStatus(String currentStatus) {
         this.currentStatus = currentStatus;
     }
+
+    public List<BudgetEntry> getBudgetEntries() {
+        return budgetEntries;
+    }
+
 }

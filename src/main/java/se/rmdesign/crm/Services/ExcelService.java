@@ -20,40 +20,44 @@ public class ExcelService {
     public Map<String, Object> processExcelFile(MultipartFile file) throws Exception {
         Map<String, Object> extractedData = new HashMap<>();
 
+        // Kontrollera filtyp
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xlsm"))) {
+            throw new IllegalArgumentException("Endast .xlsx och .xlsm-filer stöds.");
+        }
+
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(inputStream)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
-            System.out.println("📄 Läser Excel-fil: " + file.getOriginalFilename());
+            Sheet sheet = workbook.getSheetAt(1); // 🔹 Alltid första bladet
+            System.out.println("📄 Läser Excel-fil: " + filename);
 
-            // 🔹 Hämtar fasta värden från specifika rader och kolumner
+            // 🔹 Fasta celler
             extractedData.put("Projektnamn", getCellValue(sheet, 5, "D"));
             extractedData.put("Diarienummer", getCellValue(sheet, 1, "H"));
             extractedData.put("Projektledares för- och efternamn", getCellValue(sheet, 6, "D"));
             extractedData.put("Startdatum", getCellValue(sheet, 9, "D"));
             extractedData.put("Deadline", getCellValue(sheet, 9, "E"));
-            String researchProgram = extractResearchProgram(sheet);
-            extractedData.put("Forskningsprogram", researchProgram);
 
+            // 🔹 Forskningsprogram & finansiär
+            extractedData.put("Forskningsprogram", extractResearchProgram(sheet));
+            extractedData.put("Finansiär", extractFinancier(sheet));
 
-            // 🔹 Hämta finansiär med dynamisk metod
-            String financier = extractFinancier(sheet);
-            extractedData.put("Finansiär", financier);
-
-            // 🔹 Hämta budgetrader och årtal
+            // 🔹 Budgetrader och år
             Map<String, Object> budgetData = extractBudgetData(sheet);
             extractedData.put("BudgetRows", budgetData.get("BudgetRows"));
             extractedData.put("Years", budgetData.get("Years"));
 
             System.out.println("✅ Extraherad data: " + extractedData);
-            System.out.println("BudgetRows: " + extractedData.get("BudgetRows"));
 
         } catch (Exception e) {
             System.err.println("❌ Fel vid läsning av Excel-fil: " + e.getMessage());
+            throw new RuntimeException("Kunde inte läsa Excel-filen: " + e.getMessage(), e);
         }
 
         return extractedData;
     }
+
 
     private String extractResearchProgram(Sheet sheet) {
         int programRow = 10; // 🔹 Rad 11 i Excel (0-index i POI)
