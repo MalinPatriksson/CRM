@@ -36,6 +36,7 @@ public class BudgetController {
                              @RequestParam(required = false) List<String> statuses,
                              @RequestParam(required = false) List<String> academies,
                              @RequestParam(required = false) List<String> programs,
+                             @RequestParam(required = false) List<String> activities,
                              Model model) {
 
         List<Project> projects = projectService.getAllProjects();
@@ -54,8 +55,9 @@ public class BudgetController {
                 boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
                         project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
+                boolean matchesActivity = (activities == null || activities.isEmpty()) || activities.contains(project.getActivity());
 
-                if (matchesYear && matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
+                if (matchesYear && matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram && matchesActivity) {
                     filteredEntries.add(entry);
                 }
             });
@@ -104,6 +106,12 @@ public class BudgetController {
                 .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.toSet()));
 
+        model.addAttribute("activities", projects.stream()
+                .map(Project::getActivity)
+                .filter(Objects::nonNull)
+                .filter(a -> !a.isBlank())
+                .collect(Collectors.toCollection(TreeSet::new)));
+
 
         model.addAttribute("selectedYears", years != null ? years : Collections.emptyList());
         model.addAttribute("selectedFunders", funders != null ? funders : Collections.emptyList());
@@ -111,6 +119,8 @@ public class BudgetController {
         model.addAttribute("selectedStatuses", statuses != null ? statuses : Collections.emptyList());
         model.addAttribute("selectedAcademies", academies != null ? academies : Collections.emptyList());
         model.addAttribute("selectedPrograms", programs != null ? programs : Collections.emptyList());
+        model.addAttribute("selectedActivities", activities != null ? activities : Collections.emptyList());
+
 
         return "budget";
     }
@@ -123,6 +133,7 @@ public class BudgetController {
                                               @RequestParam(required = false) List<String> statuses,
                                               @RequestParam(required = false) List<String> academies,
                                               @RequestParam(required = false) List<String> programs,
+                                              @RequestParam(required = false) List<String> activities,
                                               @RequestParam(name = "weighted", defaultValue = "false") boolean weighted) {
 
         List<Project> projects = projectService.getAllProjects();
@@ -140,8 +151,10 @@ public class BudgetController {
                 boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
                         project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
+                boolean matchesActivity = (activities == null || activities.isEmpty()) || activities.contains(project.getActivity());
 
-                if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
+
+                if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram && matchesActivity) {
                     double sum = 0.0;
                     if (years == null || years.isEmpty()) {
                         sum = entry.getTotal();
@@ -155,8 +168,12 @@ public class BudgetController {
 
                     if (weighted) {
                         ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
+                        String status = latestStatus != null ? latestStatus.getStatus() : null;
                         int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
-                        sum *= (weight / 100.0);
+
+                        if (!(status != null && (status.equalsIgnoreCase("Beviljat") || status.equalsIgnoreCase("Avslag")))) {
+                            sum *= (weight / 100.0);
+                        }
                     }
 
                     totalBudget += sum;
@@ -178,6 +195,7 @@ public class BudgetController {
             @RequestParam(required = false) List<String> statuses,
             @RequestParam(required = false) List<String> academies,
             @RequestParam(required = false) List<String> programs,
+            @RequestParam(required = false) List<String> activities,
             @RequestParam(name = "weighted", defaultValue = "false") boolean weighted) {
 
         List<Project> projects = projectService.getAllProjects();
@@ -193,16 +211,22 @@ public class BudgetController {
                 boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
                         project.getAcademies().stream().anyMatch(academies::contains);
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
+                boolean matchesActivity = (activities == null || activities.isEmpty()) || activities.contains(project.getActivity());
 
-                if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
+
+                if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram && matchesActivity) {
+                    ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
+                    String status = latestStatus != null ? latestStatus.getStatus() : null;
+                    int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
+
                     for (BudgetEntryValue value : entry.getBudgetValues()) {
                         if (years == null || years.isEmpty() || years.contains(value.getYear())) {
                             double finalValue = value.getValue();
-                            if (weighted) {
-                                ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
-                                int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
+
+                            if (weighted && !(status != null && (status.equalsIgnoreCase("Beviljat") || status.equalsIgnoreCase("Avslag")))) {
                                 finalValue *= (weight / 100.0);
                             }
+
                             chartData.merge(value.getYear(), finalValue, Double::sum);
                         }
                     }

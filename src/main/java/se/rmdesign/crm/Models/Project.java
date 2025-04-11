@@ -21,6 +21,8 @@ public class Project {
     private String fundingSource;
     private String researchProgram;
     private String diaryNumber;
+    private String activity;
+
     @ElementCollection
     @CollectionTable(
             name = "project_academies",
@@ -169,4 +171,11 @@ public class Project {
         return budgetEntries;
     }
 
+    public String getActivity() {
+        return activity;
+    }
+
+    public void setActivity(String activity) {
+        this.activity = activity;
+    }
 }

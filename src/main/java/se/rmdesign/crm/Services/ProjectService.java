@@ -84,6 +84,14 @@ public class ProjectService {
                         selectedAcademies.stream().anyMatch(selected -> p.getAcademies().contains(selected));
             }
 
+            if (filters.containsKey("activities")) {
+                List<String> selectedActivities = Arrays.stream(filters.get("activities").split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank() && !s.equalsIgnoreCase("Alla"))
+                        .toList();
+
+                match &= p.getActivity() != null && selectedActivities.contains(p.getActivity());
+            }
 
             if (filters.containsKey("programs")) {
                 match &= Arrays.asList(filters.get("programs").split(","))
@@ -116,12 +124,14 @@ public class ProjectService {
         headerStyle.setBorderRight(BorderStyle.THIN);
 
         int rowIdx = 0;
+
         String[][] info = {
                 {"Projektnamn:", project.getName()},
                 {"Projektledare:", project.getManager()},
                 {"Finansiär:", project.getFundingSource()},
                 {"Akademi:", String.join(", ", project.getAcademies())},
                 {"Forskningsprogram:", project.getResearchProgram()},
+                {"Verksamhet:", project.getActivity()},
                 {"Startdatum:", project.getStartDate().toString()},
                 {"Deadline:", project.getDeadline().toString()}
         };
@@ -135,7 +145,7 @@ public class ProjectService {
             c2.setCellValue(pair[1]);
         }
 
-        rowIdx++; // empty row
+        rowIdx++;
 
         Set<Integer> allYears = new TreeSet<>();
         for (BudgetEntry be : project.getBudgetEntries()) {
@@ -161,6 +171,7 @@ public class ProjectService {
             Cell typeCell = row.createCell(0);
             typeCell.setCellValue(be.getTitle());
             typeCell.setCellStyle(bordered);
+
             Map<Integer, Double> valueMap = be.getBudgetValues().stream()
                     .collect(Collectors.toMap(BudgetEntryValue::getYear, BudgetEntryValue::getValue));
             double total = 0;
