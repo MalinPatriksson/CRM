@@ -93,7 +93,6 @@ public class ProjectService {
         }).toList();
     }
 
-    // ExcelExportService.java
     public void fillProjectToSheet(Project project, Sheet sheet) {
         Workbook workbook = sheet.getWorkbook();
         CellStyle bold = workbook.createCellStyle();

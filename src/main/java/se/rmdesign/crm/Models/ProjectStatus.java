@@ -14,15 +14,14 @@ public class ProjectStatus {
     private String status;
 
     @Column(name = "status_date")
-    private LocalDate statusDate; // 🔹 Detta är fältet som ska användas i repository
+    private LocalDate statusDate;
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
     @Column(nullable = false)
-    private int weighting = 0; // i procent
-
+    private int weighting = 0;
 
     public ProjectStatus() {
     }

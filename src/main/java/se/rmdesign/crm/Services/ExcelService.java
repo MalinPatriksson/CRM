@@ -22,18 +22,15 @@ public class ExcelService {
 
         try (InputStream inputStream = file.getInputStream(); Workbook workbook = new XSSFWorkbook(inputStream)) {
 
-            Sheet sheet = workbook.getSheetAt(0); // 🔹 Försök med Sheet 0 först
+            Sheet sheet = workbook.getSheetAt(0);
             boolean isNewFormat = isNewExcelFormat(sheet);
 
             if (!isNewFormat) {
-                // 🔄 Om det inte är en ny mall, prova istället med gamla mallen på sheet 1
                 sheet = workbook.getSheetAt(1);
-                System.out.println("📄 Provade Sheet 1 istället (gammal mall)");
-                isNewFormat = isNewExcelFormat(sheet); // kontrollera igen
+                isNewFormat = isNewExcelFormat(sheet);
             }
 
-            System.out.println("📄 Detekterat format: " + (isNewFormat ? "NY MALL" : "GAMMAL MALL"));
-
+            // Excel struktur - ny mall
             if (isNewFormat) {
                 extractedData.put("Projektnamn", getMergedRowText(sheet, 6, "D", "I"));
                 extractedData.put("Diarienummer", getCellValue(sheet, 1, "I"));
@@ -43,6 +40,7 @@ public class ExcelService {
                 extractedData.put("Startdatum", getCellValue(sheet, 14, "E"));
                 extractedData.put("Deadline", getCellValue(sheet, 14, "I"));
             } else {
+                // Excel struktur - gammal mall
                 extractedData.put("Projektnamn", getCellValue(sheet, 5, "D"));
                 extractedData.put("Diarienummer", getCellValue(sheet, 1, "H"));
                 extractedData.put("Projektledares för- och efternamn", getCellValue(sheet, 6, "D"));
@@ -59,27 +57,22 @@ public class ExcelService {
             return extractedData;
 
         } catch (Exception e) {
-            System.err.println("❌ Fel vid läsning av Excel-fil: " + e.getMessage());
             throw new RuntimeException("Kunde inte läsa Excel-filen: " + e.getMessage(), e);
         }
     }
 
     private boolean isNewExcelFormat(Sheet sheet) {
-        // Gå igenom de 10 första raderna och kolumn A–E
         for (int rowIndex = 0; rowIndex <= 10; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             if (row == null) continue;
             for (int colIndex = 0; colIndex <= 4; colIndex++) {
                 Cell cell = row.getCell(colIndex);
                 String value = parseCellValue(cell).trim().toLowerCase();
-                System.out.println("🔍 Letar i rad " + (rowIndex + 1) + ", kolumn " + (colIndex + 1) + ": '" + value + "'");
                 if (value.contains("projektnamn/akronym")) {
-                    System.out.println("✅ Ny mall identifierad på rad " + (rowIndex + 1));
                     return true;
                 }
             }
         }
-        System.out.println("❌ Kunde inte identifiera ny mall. Antas vara gammal.");
         return false;
     }
 
@@ -96,7 +89,6 @@ public class ExcelService {
             String value = parseCellValue(cell).trim();
 
             if (!value.isEmpty()) {
-                // Rätta till årtal som t.ex. "2025.0" → "2025"
                 if (value.matches("\\d{4}\\.0")) {
                     value = value.replace(".0", "");
                 }
@@ -109,76 +101,27 @@ public class ExcelService {
         return result.toString();
     }
 
-
-
-    /*
-    public Map<String, Object> processExcelFile(MultipartFile file) throws Exception {
-        Map<String, Object> extractedData = new HashMap<>();
-
-        // Kontrollera filtyp
-        String filename = file.getOriginalFilename();
-        if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xlsm"))) {
-            throw new IllegalArgumentException("Endast .xlsx och .xlsm-filer stöds.");
-        }
-
-        try (InputStream inputStream = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-
-            Sheet sheet = workbook.getSheetAt(1); // 🔹 Alltid första bladet
-            System.out.println("📄 Läser Excel-fil: " + filename);
-
-            // 🔹 Fasta celler
-            extractedData.put("Projektnamn", getCellValue(sheet, 5, "D"));
-            extractedData.put("Diarienummer", getCellValue(sheet, 1, "H"));
-            extractedData.put("Projektledares för- och efternamn", getCellValue(sheet, 6, "D"));
-            extractedData.put("Startdatum", getCellValue(sheet, 9, "D"));
-            extractedData.put("Deadline", getCellValue(sheet, 9, "E"));
-
-            // 🔹 Forskningsprogram & finansiär
-            extractedData.put("Forskningsprogram", extractResearchProgram(sheet));
-            extractedData.put("Finansiär", extractFinancier(sheet));
-
-            // 🔹 Budgetrader och år
-            Map<String, Object> budgetData = extractBudgetData(sheet);
-            extractedData.put("BudgetRows", budgetData.get("BudgetRows"));
-            extractedData.put("Years", budgetData.get("Years"));
-
-            System.out.println("✅ Extraherad data: " + extractedData);
-
-        } catch (Exception e) {
-            System.err.println("❌ Fel vid läsning av Excel-fil: " + e.getMessage());
-            throw new RuntimeException("Kunde inte läsa Excel-filen: " + e.getMessage(), e);
-        }
-
-        return extractedData;
-    }
-*/
-
     private String extractResearchProgram(Sheet sheet) {
-        int programRow = 10; // 🔹 Rad 11 i Excel (0-index i POI)
-        int answerCol1 = columnLetterToIndex("H"); // 🔹 Primär svarskolumn (H)
-        int answerCol2 = columnLetterToIndex("I"); // 🔹 Sekundär svarskolumn (I)
+        int programRow = 10; // Rad 11 i Excel (0-index i POI)
+        int answerCol1 = columnLetterToIndex("H"); // Primär svarskolumn (H)
+        int answerCol2 = columnLetterToIndex("I"); // Sekundär svarskolumn (I)
 
         Row row = sheet.getRow(programRow);
         if (row == null) {
-            System.out.println("❌ Rad 11 saknas i arket!");
             return "";
         }
 
-        String answer = parseCellValue(row.getCell(answerCol1)); // 🔹 Försök hämta från kolumn H
+        String answer = parseCellValue(row.getCell(answerCol1)); // Försök hämta från kolumn H
         if (!answer.isEmpty()) {
-            System.out.println("✅ Forskningsprogram hittat i kolumn H: " + answer);
             return answer;
         }
 
-        answer = parseCellValue(row.getCell(answerCol2)); // 🔹 Om H är tom, hämta från kolumn I
+        answer = parseCellValue(row.getCell(answerCol2)); // Om H är tom, hämta från kolumn I
         if (!answer.isEmpty()) {
-            System.out.println("✅ Forskningsprogram hittat i kolumn I: " + answer);
             return answer;
         }
 
-        System.out.println("⚠️ Forskningsprogram hittades men saknar värde!");
-        return ""; // 🔹 Lämna tomt istället för "Ej angivet"
+        return ""; // Lämna tomt istället för "Ej angivet"
     }
 
     public Map<String, Object> extractBudgetData(Sheet sheet, boolean isNewFormat) {
@@ -192,11 +135,8 @@ public class ExcelService {
         int totalBudgetRow = findRowIndex(sheet, "Totala intäkter");
 
         if (budgetStartRow == -1 || totalBudgetRow == -1) {
-            System.err.println("❌ Fel: 'Intäkter' eller 'Totala intäkter' hittades inte i Excel-filen.");
             return budgetData;
         }
-
-        System.out.println("📌 Börjar läsa budget från rad " + budgetStartRow + " till " + totalBudgetRow);
 
         List<Map<String, String>> budgetRows = new ArrayList<>();
         NumberFormat numberFormat = NumberFormat.getInstance(Locale.FRANCE);
@@ -227,10 +167,8 @@ public class ExcelService {
             }
 
             budgetRows.add(budgetRow);
-            System.out.println("✅ Sparade budgetrad: " + budgetRow);
         }
 
-        System.out.println("📌 Totalt extraherade budgetrader: " + budgetRows.size());
         budgetData.put("Years", years);
         budgetData.put("BudgetRows", budgetRows);
 
@@ -260,16 +198,16 @@ public class ExcelService {
                         int numericYear = (int) cell.getNumericCellValue();
                         years.add(String.valueOf(numericYear));
                     } catch (Exception e) {
-                        System.err.println("⚠️ Problem med årtal i kolumn " + col + ": " + yearValue);
+                        System.err.println("Problem med årtal i kolumn " + col + ": " + yearValue);
                     }
                 }
             }
         }
 
         if (years.isEmpty()) {
-            System.err.println("❌ Fortfarande inga år funna! Kolla om cellerna är tomma eller har konstig formatering.");
+            System.err.println("Fortfarande inga år funna! Kolla om cellerna är tomma eller har konstig formatering.");
         } else {
-            System.out.println("📌 Hittade årtal: " + years);
+            System.out.println("Hittade årtal: " + years);
         }
 
         return years;
@@ -277,10 +215,8 @@ public class ExcelService {
 
 
     private int findTotalColumn(Sheet sheet, int yearRowIndex) {
-        // Försök hitta med text först
         int totalCol = findColumnIndex(sheet, "Totalt", yearRowIndex);
 
-        // Om inte hittad, ta sista icke-tomma kolumnen istället
         if (totalCol == -1) {
             Row yearRow = sheet.getRow(yearRowIndex);
             if (yearRow != null) {
@@ -288,20 +224,18 @@ public class ExcelService {
                     Cell cell = yearRow.getCell(col);
                     if (cell != null && !parseCellValue(cell).isEmpty()) {
                         totalCol = col;
-                        System.out.println("📍 'Totalt' hittades inte via text, använder sista icke-tomma kolumnen: " + col);
                         break;
                     }
                 }
             }
         } else {
-            System.out.println("📍 'Totalt'-kolumn hittades via textmatchning på kolumn: " + totalCol);
+            System.out.println(" 'Totalt'-kolumn hittades via textmatchning på kolumn: " + totalCol);
         }
 
         return totalCol;
     }
 
 
-    // 🔹 Hämtar cellvärde baserat på radnummer och kolumnbokstav (A, B, C...)
     private String getCellValue(Sheet sheet, int rowNumber, String columnLetter) {
         int columnIndex = columnLetterToIndex(columnLetter);
         Row row = sheet.getRow(rowNumber - 1); // Excel-rader börjar från 1, men POI använder 0-index
@@ -310,10 +244,9 @@ public class ExcelService {
             Cell cell = row.getCell(columnIndex);
             return parseCellValue(cell);
         }
-        return "⚠️ TOM CELL!";
+        return "TOM CELL!";
     }
 
-    // 🔹 Konverterar kolumnbokstav (A, B, C...) till index (0, 1, 2...)
     private int columnLetterToIndex(String columnLetter) {
         int columnIndex = 0;
         for (char ch : columnLetter.toCharArray()) {
@@ -331,7 +264,7 @@ public class ExcelService {
                 return i;
             }
         }
-        return -1; // Returnera -1 om vi inte hittar raden
+        return -1;
     }
 
     private String extractFinancier(Sheet sheet) {
@@ -344,18 +277,14 @@ public class ExcelService {
 
         Row row = sheet.getRow(financierRowIndex);
 
-        // 🔹 Loopar igenom kolumner från B till E
         for (int col = columnLetterToIndex("B"); col <= columnLetterToIndex("E"); col++) {
             Cell cell = row.getCell(col);
             String cellValue = parseCellValue(cell);
 
             if (!cellValue.isEmpty() && !cellValue.matches(".*\\d+.*")) { // Hittar första textvärdet
-                System.out.println("✅ Hittade 'Finansiär': " + cellValue);
                 return cellValue;
             }
         }
-
-        System.err.println("❌ Ingen giltig finansiär hittades i raden.");
         return "";
     }
 
@@ -372,12 +301,9 @@ public class ExcelService {
             return -1;
         }
 
-
-
-    // 🔹 Förbättrad metod för att hämta numeriska värden
-    private double getCellValueAsDouble(Cell cell) {
+        private double getCellValueAsDouble(Cell cell) {
         if (cell == null) {
-            return 0.0; // Returnera 0 om cellen är null
+            return 0.0;
         }
         try {
             switch (cell.getCellType()) {
@@ -393,12 +319,10 @@ public class ExcelService {
                     return 0.0;
             }
         } catch (Exception e) {
-            System.err.println("⚠️ Fel vid cellkonvertering: " + e.getMessage());
             return 0.0;
         }
     }
 
-    // 🔹 Hanterar olika celltyper och returnerar deras värde
     private String parseCellValue(Cell cell) {
         if (cell == null) {
             return "";
