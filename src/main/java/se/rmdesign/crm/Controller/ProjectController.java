@@ -108,7 +108,7 @@ public class ProjectController {
 
         Set<String> researchPrograms = projects.stream()
                 .map(Project::getResearchProgram)
-                .filter(Objects::nonNull)
+                .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.toSet());
 
         Set<String> statuses = projects.stream()
