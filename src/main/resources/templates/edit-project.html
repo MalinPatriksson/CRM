@@ -174,6 +174,7 @@
                 <div class="card mt-4">
                     <div class="card-body">
                         <h5 class="card-title">Budgetöversikt</h5>
+
                         <div class="table-responsive" style="max-height: 400px;">
                             <table class="table table-bordered">
                                 <thead>
@@ -281,14 +282,27 @@
             const rows = Array.from(budgetTableBody.querySelectorAll("tr"));
             if (rows.length === 0) return;
 
-            const lastRow = rows[rows.length - 1];
-            const yearInputs = lastRow.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
+            // Hitta en rad som heter exakt "Totala intäkter" (case insensitive)
+            let totalRow = null;
+            for (let row of rows) {
+                const labelInput = row.querySelector("td input[name*='[Rubrik]']");
+                if (labelInput && labelInput.value.trim().toLowerCase() === "totala intäkter") {
+                    totalRow = row;
+                    break;
+                }
+            }
 
+            // Om ingen sådan rad finns, gör inget
+            if (!totalRow) return;
+
+            // Summera övriga rader
+            const yearInputs = totalRow.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
             for (let col = 0; col < yearInputs.length; col++) {
                 let sum = 0;
-                for (let i = 0; i < rows.length - 1; i++) {
-                    const input = rows[i].querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])")[col];
-                    const value = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
+                for (let row of rows) {
+                    if (row === totalRow) continue;
+                    const inputs = row.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
+                    const value = parseFloat(inputs[col]?.value.replace(/\s/g, '').replace(',', '.'));
                     if (!isNaN(value)) sum += value;
                 }
                 yearInputs[col].value = Math.round(sum).toLocaleString("sv-SE");
@@ -296,7 +310,7 @@
                 yearInputs[col].classList.add("bg-light");
             }
 
-            const totalInput = lastRow.querySelector("td input[name*='Total']");
+            const totalInput = totalRow.querySelector("td input[name*='Total']");
             let totalSum = 0;
             yearInputs.forEach(input => {
                 const val = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
@@ -306,6 +320,7 @@
             totalInput.readOnly = true;
             totalInput.classList.add("bg-light");
         }
+
 
         // 🔁 Lås och gråmarkera Total-kolumnen
         function lockTotalColumn() {

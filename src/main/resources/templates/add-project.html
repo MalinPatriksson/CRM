@@ -170,7 +170,28 @@
                 <!-- Budget Information -->
         <div class="card mt-4">
             <div class="card-body">
-                <h5 class="card-title">Budgetöversikt</h5>
+                <h5 class="card-title mb-3">Budgetöversikt</h5>
+
+                <!-- Knappar för att lägga till rad/år -->
+                <div class="d-flex justify-content-between mb-2">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addBudgetRow()">
+                            <i class="bi bi-plus-circle"></i> Lägg till rad
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addYearColumn()">
+                            <i class="bi bi-calendar-plus"></i> Lägg till år
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLastBudgetRow()">
+                            <i class="bi bi-dash-circle"></i> Ta bort sista rad
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeLastYearColumn()">
+                            <i class="bi bi-calendar-minus"></i> Ta bort sista år
+                        </button>
+                    </div>
+                </div>
+
 
                 <div class="table-responsive" style="max-height: 400px;">
                     <table class="table table-bordered">
@@ -194,12 +215,12 @@
                                        th:value="${row[year + '']} ?: '0.0'"/>
                             </td>
                             <td>
-                                <input type="text" th:name="'budgetRows[' + ${rowStat.index} + '][Total]'" class="form-control"
+                                <input type="text" th:name="'budgetRows[' + ${rowStat.index} + '][Total]'" class="form-control bg-light text-muted" readonly
                                        th:value="${row['Total']} ?: ''"/>
                             </td>
                         </tr>
-                        </tbody>
 
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -237,7 +258,6 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const statusSelect = document.getElementById("status");
@@ -249,11 +269,150 @@
         const missingFieldsList = document.getElementById("missingFieldsList");
         const confirmSaveButton = document.getElementById("confirmSaveButton");
 
-        const dropArea = document.getElementById("drop-area");
-        const fileInput = document.getElementById("file");
-        const fileNameDisplay = document.getElementById("fileName");
+        const budgetTableBody = document.getElementById("budgetTableBody");
+        let budgetYears = [...document.querySelectorAll("thead th")]
+            .slice(1, -1)
+            .map(th => th.textContent.trim());
+        let budgetRowIndex = budgetTableBody.querySelectorAll("tr").length;
 
-        // 🟢 Uppdatera weighting-baren visuellt
+        // 🔁 Format för tusental
+        function formatThousands(value) {
+            if (!value) return "";
+            return value.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        }
+
+        // 🔁 Uppdatera totalsumma för en rad
+        function updateRowTotal(row) {
+            let sum = 0;
+            for (let i = 1; i < row.children.length - 1; i++) {
+                const input = row.children[i].querySelector("input");
+                if (input && input.value) {
+                    const cleaned = input.value.replace(/[\s\u00A0]/g, "");
+                    sum += parseFloat(cleaned) || 0;
+                }
+            }
+            const totalInput = row.lastElementChild.querySelector("input[type='text']");
+            const hidden = row.lastElementChild.querySelector("input[type='hidden']");
+            totalInput.value = formatThousands(sum.toFixed(0));
+            hidden.value = sum.toFixed(0);
+        }
+
+        // 🔁 Lägg till ny rad
+        window.addBudgetRow = function () {
+            const tr = document.createElement("tr");
+
+            // Rubrik
+            const labelTd = document.createElement("td");
+            const labelInput = document.createElement("input");
+            labelInput.type = "text";
+            labelInput.name = `budgetRows[${budgetRowIndex}][Rubrik]`;
+            labelInput.classList.add("form-control");
+            labelTd.appendChild(labelInput);
+            tr.appendChild(labelTd);
+
+            // Årskolumner
+            budgetYears.forEach(year => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.name = `budgetRows[${budgetRowIndex}][${year}]`;
+                input.classList.add("form-control");
+                input.value = "0";
+
+                ["input", "change", "blur"].forEach(evt => {
+                    input.addEventListener(evt, () => {
+                        input.value = formatThousands(input.value);
+                        updateRowTotal(tr);
+                    });
+                });
+
+                const td = document.createElement("td");
+                td.appendChild(input);
+                tr.appendChild(td);
+            });
+
+            // Totalkolumn
+            const totalTd = document.createElement("td");
+            const totalInput = document.createElement("input");
+            totalInput.type = "text";
+            totalInput.classList.add("form-control", "bg-light", "text-muted");
+            totalInput.readOnly = true;
+            totalInput.value = "0";
+
+            const hiddenTotal = document.createElement("input");
+            hiddenTotal.type = "hidden";
+            hiddenTotal.name = `budgetRows[${budgetRowIndex}][Total]`;
+            hiddenTotal.value = "0";
+
+            totalTd.appendChild(totalInput);
+            totalTd.appendChild(hiddenTotal);
+            tr.appendChild(totalTd);
+
+            budgetTableBody.appendChild(tr);
+            updateRowTotal(tr);
+            budgetRowIndex++;
+        };
+
+        // 🔁 Lägg till år
+        window.addYearColumn = function () {
+            const year = prompt("Ange nytt år (ex. 2026):");
+            if (!year || isNaN(year) || budgetYears.includes(year)) return;
+            budgetYears.push(year);
+
+            const theadRow = document.querySelector("thead tr");
+            const totalTh = theadRow.lastElementChild;
+            const newTh = document.createElement("th");
+            newTh.textContent = year;
+            theadRow.insertBefore(newTh, totalTh);
+
+            const rows = document.querySelectorAll("#budgetTableBody tr");
+            rows.forEach((row, rowIndex) => {
+                const td = document.createElement("td");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.classList.add("form-control");
+                input.name = `budgetRows[${rowIndex}][${year}]`;
+                input.value = "0";
+
+                ["input", "change", "blur"].forEach(evt => {
+                    input.addEventListener(evt, () => {
+                        input.value = formatThousands(input.value);
+                        updateRowTotal(row);
+                    });
+                });
+
+                td.appendChild(input);
+                row.insertBefore(td, row.children[row.children.length - 1]);
+            });
+        };
+
+        // 🔁 Ta bort sista rad
+        window.removeLastBudgetRow = function () {
+            const rows = budgetTableBody.querySelectorAll("tr");
+            if (rows.length > 0) {
+                budgetTableBody.removeChild(rows[rows.length - 1]);
+                budgetRowIndex--;
+            }
+        };
+
+        // 🔁 Ta bort sista år
+        window.removeLastYearColumn = function () {
+            if (budgetYears.length === 0) return;
+            const removedYear = budgetYears.pop();
+
+            const theadRow = document.querySelector("thead tr");
+            if (theadRow.children.length > 2) {
+                theadRow.removeChild(theadRow.children[theadRow.children.length - 2]);
+            }
+
+            const rows = document.querySelectorAll("#budgetTableBody tr");
+            rows.forEach(row => {
+                if (row.children.length > 2) {
+                    row.removeChild(row.children[row.children.length - 2]);
+                }
+            });
+        };
+
+        // 🔁 Uppdatera weighting
         function updateWeightingBar(value) {
             const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
             weightingBar.style.width = safeValue + "%";
@@ -261,40 +420,25 @@
             weightingText.innerText = safeValue + "%";
         }
 
-        // 🟢 Sätt viktning baserat på status
         function updateWeighting() {
             let percentage = parseInt(weightingInput.value);
-
-            if (statusSelect.value === "Beviljat") {
-                percentage = 100;
-            } else if (statusSelect.value === "Avslag") {
-                percentage = 0;
-            }
-
+            if (statusSelect.value === "Beviljat") percentage = 100;
+            else if (statusSelect.value === "Avslag") percentage = 0;
             weightingInput.value = percentage;
             updateWeightingBar(percentage);
         }
 
-        // 🛡️ Formulärvalidering + modalfönster
+        // 🔁 Validera formulär
         function validateForm(event) {
             event.preventDefault();
             let missingFields = [];
             let isValid = true;
 
-            // 🔹 Validera vanliga required-fields (inputs/selects)
             requiredFields.forEach(field => {
-                let value = field.value;
-
-                if (field.tagName === "SELECT") {
-                    value = field.options[field.selectedIndex]?.value || "";
-                } else if (["date", "number", "text"].includes(field.type)) {
-                    value = value?.toString().trim();
-                }
-
+                let value = field.value?.toString().trim();
                 if (!value) {
                     field.classList.add("is-invalid");
-                    let label = document.querySelector(`label[for="${field.id}"]`) ||
-                        field.closest(".col, .col-md-1, .col-md-2, .col-md-4, .col-md-6")?.querySelector("label");
+                    const label = document.querySelector(`label[for="${field.id}"]`);
                     const labelText = label?.innerText?.trim() || "Okänt fält";
                     missingFields.push(labelText);
                     isValid = false;
@@ -303,7 +447,6 @@
                 }
             });
 
-            // 🔹 Kontrollera att minst en akademi är vald
             const academyContainer = document.querySelector('[data-required-academy]');
             const checkboxes = academyContainer.querySelectorAll('input[type="checkbox"]');
             const oneChecked = Array.from(checkboxes).some(cb => cb.checked);
@@ -315,7 +458,6 @@
                 academyContainer.classList.remove("border", "border-danger", "rounded");
             }
 
-            // 🔹 Visa modal eller skicka formuläret
             if (!isValid) {
                 missingFieldsList.innerHTML = missingFields.map(f => `<li>${f}</li>`).join("");
                 new bootstrap.Modal(document.getElementById("missingFieldsModal")).show();
@@ -324,50 +466,15 @@
             }
         }
 
+        statusSelect?.addEventListener("change", updateWeighting);
+        weightingInput?.addEventListener("input", () => updateWeightingBar(weightingInput.value));
+        projectForm?.addEventListener("submit", validateForm);
+        confirmSaveButton?.addEventListener("click", () => projectForm.submit());
 
-        // 🔄 Init vid sidladdning
         updateWeighting();
         updateWeightingBar(weightingInput.value);
-
-        // 🎯 Event Listeners
-        statusSelect.addEventListener("change", updateWeighting);
-        weightingInput.addEventListener("input", () => updateWeightingBar(weightingInput.value));
-        projectForm.addEventListener("submit", validateForm);
-        confirmSaveButton.addEventListener("click", () => projectForm.submit());
-
-        // 📥 Drag & Drop Excel (.xlsx)
-        dropArea.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            dropArea.classList.add("border-primary");
-        });
-
-        dropArea.addEventListener("dragleave", () => {
-            dropArea.classList.remove("border-primary");
-        });
-
-        dropArea.addEventListener("drop", (e) => {
-            e.preventDefault();
-            dropArea.classList.remove("border-primary");
-            const droppedFile = e.dataTransfer.files[0];
-            if (
-                droppedFile &&
-                (droppedFile.name.endsWith(".xlsx") || droppedFile.name.endsWith(".xlsm"))
-            ) {
-                fileInput.files = e.dataTransfer.files;
-                fileNameDisplay.textContent = "Vald fil: " + droppedFile.name;
-            } else {
-                alert("Endast .xlsx eller .xlsm-filer stöds.");
-            }
-
-        });
-
-        fileInput.addEventListener("change", () => {
-            if (fileInput.files.length > 0) {
-                fileNameDisplay.textContent = "Vald fil: " + fileInput.files[0].name;
-            }
-        });
     });
 </script>
 
-</body>
+    </body>
 </html>
