@@ -35,7 +35,4 @@ public class BudgetEntryValue {
     public double getValue() { return value; }
     public void setValue(double value) { this.value = value; }
 
-    public void setYear(String year) {
-        this.year = Integer.parseInt(year);
-    }
 }

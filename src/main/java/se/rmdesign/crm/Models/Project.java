@@ -30,8 +30,8 @@ public class Project {
     private List<String> academies = new ArrayList<>();
 
 
-    @Column(nullable = false)  // 🔹 Måste ha ett värde
-    private String currentStatus = "Idé";  // 🔹 Standardvärde
+    @Column(nullable = false)
+    private String currentStatus = "Idé";
 
     private LocalDate statusDate = LocalDate.now();
     private LocalDate expectedResponseDate;
@@ -57,11 +57,10 @@ public class Project {
 
     public String getCurrentStatus() {
         if (statusHistory != null && !statusHistory.isEmpty()) {
-            return statusHistory.get(statusHistory.size() - 1).getStatus(); // Hämta senaste status-strängen
+            return statusHistory.get(statusHistory.size() - 1).getStatus();
         }
-        return "Ej påbörjat"; // Standardvärde om ingen status finns
+        return "Ej påbörjat";
     }
-
 
     public double getTotalBudget() {
         return budgetEntries.stream()

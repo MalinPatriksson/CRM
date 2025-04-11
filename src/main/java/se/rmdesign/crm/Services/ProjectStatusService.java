@@ -20,12 +20,10 @@ public class ProjectStatusService {
         projectStatusRepository.save(projectStatus);
     }
 
-    //Hämta senaste status för ett projekt
     public ProjectStatus getLatestStatus(Long projectId) {
         return projectStatusRepository.findTopByProjectIdOrderByStatusDateDesc(projectId);
     }
 
-    //Hämta status-historik
     public List<ProjectStatus> getStatusHistory(Long projectId) {
         return projectStatusRepository.findByProjectIdOrderByStatusDateDesc(projectId);
     }

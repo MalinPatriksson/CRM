@@ -1,4 +1,3 @@
-<!-- KOD DEL 1 - HEAD OCH START -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="sv">
 <head>
@@ -18,9 +17,7 @@
     <form id="budgetFilterForm" action="/budget" method="get">
         <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
 
-            <!-- KOD DEL 2 - FILTER -->
 
-            <!-- ÅR -->
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle" type="button" id="filterYearBtn" data-bs-toggle="dropdown" aria-expanded="false">Välj år</button>
                 <ul class="dropdown-menu" aria-labelledby="filterYearBtn">
@@ -114,7 +111,7 @@
 
         </div>
 
-        <!-- KOD DEL 3 - KNAPPAR & DIAGRAM -->
+        <!-- KNAPPAR & DIAGRAM -->
         <div class="d-flex mt-3 justify-content-center">
             <button type="button" id="applyFilters" class="btn btn-primary">Visa statistik</button>
             <button type="button" id="resetFilters" class="btn btn-secondary ms-3">Återställ</button>
@@ -224,9 +221,7 @@
             updateChart();
         });
     </script>
-
     <script th:inline="javascript">
-        /*<![CDATA[*/
         const initialLabels = /*[[${chartLabels}]]*/ [];
         const initialData = /*[[${chartData}]]*/ [];
 
@@ -250,9 +245,8 @@
                 }
             });
         }
-        /*]]>*/
     </script>
 </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

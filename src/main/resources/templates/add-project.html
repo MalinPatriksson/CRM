@@ -18,8 +18,6 @@
         <strong th:text="${errorMessage}"></strong>
     </div>
 
-
-
     <!-- Fil-uppladdning för både PDF & Excel -->
     <form th:action="@{/upload-excel}" method="post" enctype="multipart/form-data" class="mb-3">
         <div class="card">
@@ -41,7 +39,6 @@
             </div>
         </div>
     </form>
-
 
     <!-- Formulär för att lägga till projekt -->
     <form id="projectForm" method="post" action="/add" enctype="multipart/form-data" novalidate>
@@ -85,6 +82,7 @@
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
+
                     <!-- Forskningsprogram -->
                     <div class="col-md-6">
                         <label for="researchProgram" class="form-label">Forskningsprogram</label>
@@ -123,7 +121,7 @@
                 </div>
 
 
-                <!-- 🔹 STATUS & DATUM -->
+                <!-- STATUS & DATUM -->
                 <div class="row g-2 mt-2">
                     <div class="col-md-4">
                         <label for="status" class="form-label">Projektstatus</label>
@@ -148,7 +146,7 @@
                 </div>
 
 
-                <!-- 🔹 Viktning - Sannolikhet för godkännande -->
+                <!-- Viktning - Sannolikhet för godkännande -->
                 <div class="row justify-content-center align-items-center mt-4">
                     <div class="col-md-2 text-end">
                         <label for="weighting" class="form-label mb-0">Viktning (%)</label>
@@ -275,13 +273,13 @@
             .map(th => th.textContent.trim());
         let budgetRowIndex = budgetTableBody.querySelectorAll("tr").length;
 
-        // 🔁 Format för tusental
+        // Format för tusental
         function formatThousands(value) {
             if (!value) return "";
             return value.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         }
 
-        // 🔁 Uppdatera totalsumma för en rad
+        // Uppdatera totalsumma för en rad
         function updateRowTotal(row) {
             let sum = 0;
             for (let i = 1; i < row.children.length - 1; i++) {
@@ -297,7 +295,7 @@
             hidden.value = sum.toFixed(0);
         }
 
-        // 🔁 Lägg till ny rad
+        // Lägg till ny rad
         window.addBudgetRow = function () {
             const tr = document.createElement("tr");
 
@@ -352,7 +350,7 @@
             budgetRowIndex++;
         };
 
-        // 🔁 Lägg till år
+        // Lägg till år
         window.addYearColumn = function () {
             const year = prompt("Ange nytt år (ex. 2026):");
             if (!year || isNaN(year) || budgetYears.includes(year)) return;
@@ -385,7 +383,7 @@
             });
         };
 
-        // 🔁 Ta bort sista rad
+        // Ta bort sista rad
         window.removeLastBudgetRow = function () {
             const rows = budgetTableBody.querySelectorAll("tr");
             if (rows.length > 0) {
@@ -394,7 +392,7 @@
             }
         };
 
-        // 🔁 Ta bort sista år
+        // Ta bort sista år
         window.removeLastYearColumn = function () {
             if (budgetYears.length === 0) return;
             const removedYear = budgetYears.pop();
@@ -412,7 +410,7 @@
             });
         };
 
-        // 🔁 Uppdatera weighting
+        // Uppdatera weighting
         function updateWeightingBar(value) {
             const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
             weightingBar.style.width = safeValue + "%";
@@ -428,7 +426,7 @@
             updateWeightingBar(percentage);
         }
 
-        // 🔁 Validera formulär
+        // Validera formulär
         function validateForm(event) {
             event.preventDefault();
             let missingFields = [];
@@ -475,6 +473,5 @@
         updateWeightingBar(weightingInput.value);
     });
 </script>
-
-    </body>
+</body>
 </html>

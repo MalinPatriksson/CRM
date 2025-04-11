@@ -52,7 +52,6 @@ public class BudgetEntryService {
 
         for (Long existingId : existingEntriesMap.keySet()) {
             if (!updatedIds.contains(existingId) && (deletedBudgetRows == null || !deletedBudgetRows.contains(existingId))) {
-                System.out.println("🗑️ Markerar budgetrad för borttagning: " + existingId);
                 BudgetEntry toDelete = existingEntriesMap.get(existingId);
                 budgetEntryRepository.delete(toDelete);
             }
@@ -60,7 +59,6 @@ public class BudgetEntryService {
 
         if (!entriesToSave.isEmpty()) {
             saveAll(entriesToSave, project);
-            System.out.println("✅ Budgetrader uppdaterade/sparade: " + entriesToSave.size());
         }
     }
 
@@ -90,10 +88,8 @@ public class BudgetEntryService {
         for (BudgetEntry entry : entries) {
             entry.setProject(project);
 
-            // 🔹 Spara först själva entry så den får ett ID
             BudgetEntry savedEntry = budgetEntryRepository.save(entry);
 
-            // 🔹 Spara alla värden (BudgetEntryValue) kopplade till entry
             for (BudgetEntryValue value : entry.getBudgetValues()) {
                 value.setBudgetEntry(savedEntry);
                 budgetEntryValueRepository.save(value);
@@ -105,10 +101,9 @@ public class BudgetEntryService {
     public List<BudgetEntry> findByProject(Project project) {
         List<BudgetEntry> budgetEntries = budgetEntryRepository.findByProject(project);
 
-        // 🔹 Hämta och sätt budgetvärden för varje BudgetEntry
         for (BudgetEntry entry : budgetEntries) {
             List<BudgetEntryValue> budgetValues = budgetEntryValueService.findByBudgetEntry(entry);
-            entry.setBudgetValues(budgetValues); // ✅ Korrekt - behåller det som en List
+            entry.setBudgetValues(budgetValues);
         }
 
         return budgetEntries;
@@ -142,26 +137,24 @@ public class BudgetEntryService {
                 currentEntry.setTitle(value.trim());
             } else if (key.equalsIgnoreCase("Total")) {
                 currentEntry.setTotal(parseBudgetValue(value));
-            } else if (key.matches("\\d{4}")) { // År
+            } else if (key.matches("\\d{4}")) {
                 int year = Integer.parseInt(key);
                 double val = parseBudgetValue(value);
                 valueMap.computeIfAbsent(index, k -> new ArrayList<>()).add(new BudgetEntryValue(currentEntry, year, val));
             }
         }
 
-        // Koppla alla values till respektive BudgetEntry
         for (Map.Entry<Long, BudgetEntry> entry : entryMap.entrySet()) {
             List<BudgetEntryValue> values = valueMap.getOrDefault(entry.getKey(), new ArrayList<>());
             entry.getValue().setBudgetValues(values);
         }
 
         List<BudgetEntry> entriesToSave = new ArrayList<>(entryMap.values());
-        budgetEntryRepository.saveAll(entriesToSave); // ⬅️ Detta sparar till databasen
+        budgetEntryRepository.saveAll(entriesToSave);
 
-        // Spara även varje BudgetEntryValue separat (eller via Cascade, beroende på din setup)
         for (BudgetEntry entry : entriesToSave) {
             for (BudgetEntryValue val : entry.getBudgetValues()) {
-                val.setBudgetEntry(entry); // Se till att kopplingen sätts
+                val.setBudgetEntry(entry);
             }
             budgetEntryValueRepository.saveAll(entry.getBudgetValues());
         }
@@ -179,7 +172,7 @@ public class BudgetEntryService {
 
     private double parseBudgetValue(String value) {
         if (value == null || value.trim().isEmpty()) {
-            return 0.0; // Returnera 0.0 istället för att kasta NumberFormatException
+            return 0.0;
         }
         return Double.parseDouble(value.replaceAll("[^\\d.]", ""));
     }

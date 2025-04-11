@@ -74,6 +74,7 @@
                     </div>
                 </div>
                 <div class="row g-2 mt-2">
+
                     <!-- Forskningsprogram -->
                     <div class="col-md-6">
                         <label for="researchProgram" class="form-label">Forskningsprogram</label>
@@ -110,7 +111,6 @@
                     </div>
                 </div>
                 </div>
-
 
 
                 <div class="row g-2 mt-2">
@@ -218,7 +218,6 @@
     </form>
 </div>
 
-<!-- Modal för att visa saknade fält -->
 <div class="modal fade" id="missingFieldsModal" tabindex="-1" aria-labelledby="missingFieldsModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -252,7 +251,7 @@
         const missingFieldsList = document.getElementById("missingFieldsList");
         const confirmSaveButton = document.getElementById("confirmSaveButton");
 
-        // 🔁 Budgetauto-uppdatering
+        // Budgetauto-uppdatering
         const budgetTableBody = document.getElementById("budgetTableBody");
         budgetTableBody.querySelectorAll("input").forEach(input => {
             input.addEventListener("input", () => {
@@ -261,7 +260,7 @@
             });
         });
 
-        // 🔁 Beräkna totalsumma för en rad
+        // Beräkna totalsumma för en rad
         function updateRowTotal(input) {
             const row = input.closest("tr");
             const inputs = row.querySelectorAll("td input:not([name*='Rubrik']):not([name*='Total'])");
@@ -277,7 +276,7 @@
             }
         }
 
-        // 🔁 Summera Totala intäkter (sista raden) + dess total
+        // Summera Totala intäkter (sista raden) + dess total
         function updateTotalIncomeRow() {
             const rows = Array.from(budgetTableBody.querySelectorAll("tr"));
             if (rows.length === 0) return;
@@ -322,7 +321,7 @@
         }
 
 
-        // 🔁 Lås och gråmarkera Total-kolumnen
+        // Lås och gråmarkera Total-kolumnen
         function lockTotalColumn() {
             const totalInputs = budgetTableBody.querySelectorAll("td input[name*='[Total]']");
             totalInputs.forEach(input => {
@@ -334,7 +333,7 @@
         lockTotalColumn();
         updateTotalIncomeRow();
 
-        // 📊 Viktning progressbar
+        // Viktning progressbar
         function updateWeightingBar(value) {
             const safeValue = Math.max(0, Math.min(100, parseInt(value) || 0));
             weightingBar.style.width = safeValue + "%";
@@ -439,7 +438,5 @@
         }
     });
 </script>
-
-
 </body>
 </html>

@@ -12,10 +12,8 @@ import java.util.List;
 @Repository
 public interface BudgetEntryValueRepository extends JpaRepository<BudgetEntryValue, Long> {
 
-    // Hämta alla budgetvärden för en viss budgetpost
     List<BudgetEntryValue> findByBudgetEntry(BudgetEntry budgetEntry);
 
-    // Radera alla budgetvärden för en viss budgetpost
     @Transactional
     void deleteByBudgetEntry(BudgetEntry budgetEntry);
 }
