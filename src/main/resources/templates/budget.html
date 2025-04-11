@@ -170,15 +170,47 @@
                             document.getElementById('noDataMessage').style.display = 'none';
                         }
 
+                        const weighted = document.getElementById("weightedCheckbox").checked;
+
+                        // Hjälpfunktion: Läs av vad som är ikryssat
+                        function getCheckedInfo(name, allSelector) {
+                            const boxes = document.querySelectorAll(`input[name='${name}']`);
+                            const checked = Array.from(boxes).filter(cb => cb.checked);
+                            const allBox = document.getElementById(allSelector);
+                            const allSelected = allBox && allBox.checked;
+                            const texts = checked.map(cb => cb.nextElementSibling?.innerText || cb.value);
+                            return allSelected ? "Alla" : texts.join(", ");
+                        }
+
+                        const parts = [];
+
+                        const filters = [
+                            { name: "persons", label: "Projektledare", allId: "selectAllPersons" },
+                            { name: "funders", label: "Finansiärer", allId: "selectAllFunders" },
+                            { name: "academies", label: "Akademier", allId: "selectAllAcademies" },
+                            { name: "programs", label: "Program", allId: "selectAllPrograms" },
+                            { name: "statuses", label: "Status", allId: "selectAllStatus" },
+                            { name: "years", label: "År", allId: "selectAllYears" }
+                        ];
+
+                        filters.forEach(f => {
+                            const val = getCheckedInfo(f.name, f.allId);
+                            if (val) parts.push(`${f.label}: ${val}`);
+                        });
+
+                        if (weighted) parts.push("Viktad");
+
+                        const dynamicLabel = parts.length > 0 ? parts.join(". ") + "." : "Alla projekt.";
+
                         window.budgetChart = new Chart(ctx, {
                             type: 'bar',
                             data: {
                                 labels: data.labels,
                                 datasets: [{
-                                    label: "Sökta medel",
+                                    label: dynamicLabel,
                                     data: data.values,
-                                    backgroundColor: "rgba(54, 162, 235, 0.6)",
-                                    borderColor: "rgba(54, 162, 235, 1)",
+                                    backgroundColor: weighted ? "rgba(255, 159, 64, 0.6)" : "rgba(54, 162, 235, 0.6)",
+                                    borderColor: weighted ? "rgba(255, 159, 64, 1)" : "rgba(54, 162, 235, 1)",
                                     borderWidth: 1
                                 }]
                             },
@@ -189,6 +221,7 @@
                         });
                     });
             }
+
 
             function triggerFilters() {
                 updateTotalBudget();
@@ -232,7 +265,6 @@
                 data: {
                     labels: initialLabels,
                     datasets: [{
-                        label: "Sökta medel",
                         data: initialData,
                         backgroundColor: "rgba(54, 162, 235, 0.6)",
                         borderColor: "rgba(54, 162, 235, 1)",

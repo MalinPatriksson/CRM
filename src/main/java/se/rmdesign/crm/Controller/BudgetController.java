@@ -155,8 +155,12 @@ public class BudgetController {
 
                     if (weighted) {
                         ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
+                        String status = latestStatus != null ? latestStatus.getStatus() : null;
                         int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
-                        sum *= (weight / 100.0);
+
+                        if (!(status != null && (status.equalsIgnoreCase("Beviljat") || status.equalsIgnoreCase("Avslag")))) {
+                            sum *= (weight / 100.0);
+                        }
                     }
 
                     totalBudget += sum;
@@ -195,14 +199,18 @@ public class BudgetController {
                 boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
 
                 if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
+                    ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
+                    String status = latestStatus != null ? latestStatus.getStatus() : null;
+                    int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
+
                     for (BudgetEntryValue value : entry.getBudgetValues()) {
                         if (years == null || years.isEmpty() || years.contains(value.getYear())) {
                             double finalValue = value.getValue();
-                            if (weighted) {
-                                ProjectStatus latestStatus = projectStatusService.getLatestStatus(project.getId());
-                                int weight = latestStatus != null ? latestStatus.getWeighting() : 0;
+
+                            if (weighted && !(status != null && (status.equalsIgnoreCase("Beviljat") || status.equalsIgnoreCase("Avslag")))) {
                                 finalValue *= (weight / 100.0);
                             }
+
                             chartData.merge(value.getYear(), finalValue, Double::sum);
                         }
                     }
