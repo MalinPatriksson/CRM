@@ -168,8 +168,8 @@ public class BudgetController {
             @RequestParam(required = false) List<String> funders,
             @RequestParam(required = false) List<String> persons,
             @RequestParam(required = false) List<String> statuses,
-            @RequestParam(required = false) List<String> academies,      // ✅ NYTT
-            @RequestParam(required = false) List<String> programs,       // ✅ NYTT
+            @RequestParam(required = false) List<String> academies,
+            @RequestParam(required = false) List<String> programs,
             @RequestParam(name = "weighted", defaultValue = "false") boolean weighted) {
 
         List<Project> projects = projectService.getAllProjects();
@@ -184,7 +184,7 @@ public class BudgetController {
                 boolean matchesStatus = (statuses == null || statuses.isEmpty()) || statuses.contains(project.getCurrentStatus());
                 boolean matchesAcademy = (academies == null || academies.isEmpty()) ||
                         project.getAcademies().stream().anyMatch(academies::contains);
-                boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());    // ✅
+                boolean matchesProgram = (programs == null || programs.isEmpty()) || programs.contains(project.getResearchProgram());
 
                 if (matchesFunder && matchesPerson && matchesStatus && matchesAcademy && matchesProgram) {
                     for (BudgetEntryValue value : entry.getBudgetValues()) {

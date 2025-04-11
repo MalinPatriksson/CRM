@@ -61,25 +61,21 @@ public class ProjectController {
 
         DecimalFormat formatter = new DecimalFormat("#,###");
 
-        // 🔹 Räkna ut och sätt budget för varje projekt
         for (Project project : projects) {
             Double totalBudget = budgetEntryService.getTotalIncomeForProject(project.getId());
             project.setTotalBudget(totalBudget != null ? totalBudget : 0.0);
         }
 
-        // 🔹 Budgetfilter gränser
         final double DEFAULT_MAX_BUDGET = 10_000_000;
         if (minBudget == null) minBudget = 0.0;
         if (maxBudget == null || maxBudget > DEFAULT_MAX_BUDGET) maxBudget = DEFAULT_MAX_BUDGET;
 
-        // 🔹 Filtrera projekt på budget
         double finalMinBudget = minBudget;
         double finalMaxBudget = maxBudget;
         projects = projects.stream()
                 .filter(p -> p.getTotalBudget() >= finalMinBudget && p.getTotalBudget() <= finalMaxBudget)
                 .collect(Collectors.toList());
 
-        // 🔹 Alla år mellan start och deadline (inklusive mellanliggande år)
         Set<Integer> allYears = projects.stream()
                 .flatMap(project -> {
                     LocalDate start = project.getStartDate();
@@ -120,11 +116,9 @@ public class ProjectController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // 🔹 Formaterade budgetgränser
         String formattedMinBudget = formatter.format(minBudget);
         String formattedMaxBudget = formatter.format(maxBudget);
 
-        // 🔹 Lägg till i model
         model.addAttribute("projects", projects);
         model.addAttribute("projectManagers", projectManagers);
         model.addAttribute("fundingSources", fundingSources);
@@ -170,9 +164,9 @@ public class ProjectController {
         project.setFundingSource(fundingSource);
         project.setResearchProgram(researchProgram);
         project.setDiaryNumber(diaryNumber);
-        project.setAcademies(academies); // ✅ Akademi
-        project.setExpectedResponseDate(expectedResponseDate); // ✅ Förväntat svar
-        project.setStatusDate(statusDate); // ✅ Statusdatum
+        project.setAcademies(academies);
+        project.setExpectedResponseDate(expectedResponseDate);
+        project.setStatusDate(statusDate);
 
         if (project.getCurrentStatus() == null || project.getCurrentStatus().isEmpty()) {
             project.setCurrentStatus(status);
@@ -202,7 +196,6 @@ public class ProjectController {
         }
 
 
-        // ✅ Uppdatera currentStatus i Project-tabellen
         ProjectStatus latestStatusAfterSave = projectStatusService.getLatestStatus(savedProject.getId());
         if (latestStatusAfterSave != null) {
             savedProject.setCurrentStatus(latestStatusAfterSave.getStatus());
@@ -211,32 +204,6 @@ public class ProjectController {
 
         redirectAttributes.addFlashAttribute("message", "Projektet \"" + name + "\" har sparats!");
         return "redirect:/projects";
-    }
-
-
-
-    @GetMapping("/projects/{id}/budget")
-    public String showBudget(@PathVariable Long id, Model model) {
-        Project project = projectService.getProjectById(id);
-        model.addAttribute("project", project);
-
-        List<BudgetEntry> budgetEntries = budgetEntryService.findByProject(project);
-        model.addAttribute("budgetEntries", budgetEntries);
-
-        //Hämta budgetposten "Totala intäkter" från databasen
-        Optional<BudgetEntry> totalEntry = budgetEntries.stream()
-                .filter(entry -> entry.getTitle().equalsIgnoreCase("Totala intäkter"))
-                .findFirst();
-
-        double totalBudget = totalEntry.map(BudgetEntry::getTotal).orElse(0.0);
-        project.setTotalBudget(totalBudget);
-        model.addAttribute("totalBudget", totalBudget);
-
-        List<Integer> years = IntStream.rangeClosed(project.getStartDate().getYear(), project.getDeadline().getYear())
-                .boxed().collect(Collectors.toList());
-        model.addAttribute("years", years);
-
-        return "budget-table";
     }
 
 
@@ -261,15 +228,12 @@ public class ProjectController {
 
             Map<String, Object> extractedData = excelService.processExcelFile(file);
             model.addAttribute("extractedData", extractedData);
-            return "add-project"; // Visa samma formulär igen med ifyllda värden
+            return "add-project";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Fel vid bearbetning av Excel-filen: " + e.getMessage());
             return "error";
         }
     }
-
-
-
 
     @PostMapping("/add")
     public String addProject(
@@ -308,16 +272,13 @@ public class ProjectController {
             project.setCurrentStatus(status);
         }
 
-        // 🔹 Spara projektet först
         Project savedProject = projectService.saveProject(project);
 
-        // 🔹 Spara budget
         List<BudgetEntry> budgetEntries = budgetEntryService.processBudgetEntries(budgetRows, savedProject);
         if (!budgetEntries.isEmpty()) {
             budgetEntryService.saveAll(budgetEntries, savedProject);
         }
 
-        // 🔹 Hantera status och viktning
         ProjectStatus latestStatus = projectStatusService.getLatestStatus(savedProject.getId());
 
         if (latestStatus == null) {
@@ -331,7 +292,6 @@ public class ProjectController {
             projectStatusService.saveProjectStatus(latestStatus);
         }
 
-        // 🔹 Uppdatera currentStatus i Project
         ProjectStatus latestStatusAfterSave = projectStatusService.getLatestStatus(savedProject.getId());
         if (latestStatusAfterSave != null) {
             savedProject.setCurrentStatus(latestStatusAfterSave.getStatus());
@@ -360,7 +320,7 @@ public class ProjectController {
                 return "error";
             }
 
-            // 🟢 Skriv endast över om värde finns i filen
+            // Skriv endast över om värde finns i filen
             if (extractedData.get("Projektnamn") != null)
                 project.setName((String) extractedData.get("Projektnamn"));
 
@@ -384,12 +344,10 @@ public class ProjectController {
             if (extractedData.get("Forskningsprogram") != null)
                 project.setResearchProgram((String) extractedData.get("Forskningsprogram"));
 
-            // 🟢 Skicka vidare till formuläret med ifyllda fält
             model.addAttribute("project", project);
             model.addAttribute("budgetRows", extractedData.get("BudgetRows"));
             model.addAttribute("years", extractedData.get("Years"));
 
-            // 👇 Behåll status om den redan finns
             ProjectStatus currentStatus = projectStatusService.getLatestStatus(projectId);
             LocalDate statusDate = (currentStatus != null) ? currentStatus.getStatusDate() : LocalDate.now();
             model.addAttribute("currentStatus", (currentStatus != null) ? currentStatus.getStatus() : "Idé");
@@ -424,13 +382,11 @@ public class ProjectController {
                 entry.setBudgetValues(budgetValues);
             }
 
-            // Formatterare med mellanslag och utan decimaler
             DecimalFormat formatter = new DecimalFormat("#,###");
             DecimalFormatSymbols symbols = new DecimalFormatSymbols();
             symbols.setGroupingSeparator(' ');
             formatter.setDecimalFormatSymbols(symbols);
 
-            // Skapa map med rader för HTML-formuläret
             List<Map<String, String>> budgetRows = new ArrayList<>();
 
             for (BudgetEntry entry : budgetEntries) {
@@ -499,10 +455,8 @@ public class ProjectController {
             projectService.fillProjectToSheet(project, sheet); // En metod som fyller in fält i rätt celler
         }
 
-        // 4. Ta bort mallbladet
         workbook.removeSheetAt(0);
 
-        // 5. Skicka tillbaka filen som nedladdning
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=projekt-export.xlsx");
         workbook.write(response.getOutputStream());
