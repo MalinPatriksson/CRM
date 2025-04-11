@@ -78,7 +78,11 @@ public class BudgetController {
         model.addAttribute("availableYears", filteredEntries.stream()
                 .flatMap(e -> e.getBudgetValues().stream().map(BudgetEntryValue::getYear))
                 .collect(Collectors.toSet()));
-        model.addAttribute("fundingSources", projects.stream().map(Project::getFundingSource).filter(Objects::nonNull).collect(Collectors.toSet()));
+        model.addAttribute("fundingSources", projects.stream()
+                .map(Project::getFundingSource)
+                .filter(s -> s != null && !s.trim().isEmpty())
+                .collect(Collectors.toSet()));
+
         model.addAttribute("projectManagers", projects.stream().map(Project::getManager).filter(Objects::nonNull).collect(Collectors.toSet()));
         model.addAttribute("availableStatuses", projects.stream()
                 .map(Project::getCurrentStatus)
@@ -86,14 +90,18 @@ public class BudgetController {
                 .collect(Collectors.toSet()));
         String selectedStatusLabel = (statuses == null || statuses.isEmpty()) ? "" : "Status: " + String.join(", ", statuses);
         model.addAttribute("selectedStatusLabel", selectedStatusLabel);
-        model.addAttribute("academies", projects.stream()
-                .map(Project::getAcademies)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet()));
+
+        Set<String> uniqueAcademies = projects.stream()
+                .flatMap(p -> p.getAcademies().stream())
+                .filter(a -> a != null && !a.trim().isEmpty())
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        model.addAttribute("academies", uniqueAcademies);
+
 
         model.addAttribute("researchPrograms", projects.stream()
                 .map(Project::getResearchProgram)
-                .filter(Objects::nonNull)
+                .filter(s -> s != null && !s.trim().isEmpty())
                 .collect(Collectors.toSet()));
 
 
