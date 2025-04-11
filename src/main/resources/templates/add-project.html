@@ -90,8 +90,8 @@
                                th:value="${#strings.replace(extractedData['Forskningsprogram'], ':', '')} ?: ''">
                     </div>
 
-                    <!-- Akademi -->
-                    <div class="col-md-6 d-flex align-items-end">
+                    <!-- Akademi + Verksamhet -->
+                    <div class="col-md-3 d-flex align-items-end">
                         <div>
                             <label class="form-label d-block">Akademi</label>
                             <div id="academyCheckboxes" class="d-flex flex-wrap gap-3" data-required-academy="true">
@@ -118,8 +118,17 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
+                    <div class="col-md-3">
+                        <label for="activity" class="form-label">Verksamhet</label>
+                        <select id="activity" name="activity" class="form-select required-field">
+                        <option value="">-- Välj verksamhet --</option>
+                            <option value="Forskningsprojekt" th:selected="${project?.activity == 'Forskningsprojekt'}">Forskningsprojekt (Forskning 5)</option>
+                            <option value="Direktuppdrag forskning" th:selected="${project?.activity == 'Direktuppdrag forskning'}">Direktuppdrag forskning (Uppdrag forskning 505)</option>
+                            <option value="Direktuppdrag utbildning" th:selected="${project?.activity == 'Direktuppdrag utbildning'}">Direktuppdrag utbildning (Utbildning bidrag 405)</option>
+                        </select>
+                    </div>
+                </div>
 
                 <!-- STATUS & DATUM -->
                 <div class="row g-2 mt-2">

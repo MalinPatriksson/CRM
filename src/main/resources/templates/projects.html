@@ -141,6 +141,19 @@
                     </li>
                 </ul>
             </div>
+            <!-- Verksamhet -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterActivityBtn" data-bs-toggle="dropdown">Välj verksamhet</button>
+                <ul class="dropdown-menu" aria-labelledby="filterActivityBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllActivities" data-select-class="filter-activity" class="me-2"> Alla</label></li>
+                    <li th:each="activity : ${activities}">
+                        <label class="dropdown-item">
+                            <input type="checkbox" class="filter-activity me-2" th:value="${activity}">
+                            <span th:text="${activity}"></span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
             <!-- Status -->
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle" type="button" id="filterStatusBtn" data-bs-toggle="dropdown">Välj status</button>
@@ -178,13 +191,14 @@
                     <th data-sort="deadline">Slutdatum</th>
                     <th data-sort="budget">Total budget</th>
 
+
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="project : ${projects}"
                     th:onclick="'window.location.href=\'/edit/' + ${project.id} + '\';'"
                     th:attr="data-funding=${project.fundingSource},     data-academy=${#strings.listJoin(project.academies, ',')},
-                    data-program=${project.researchProgram}, data-status=${project.latestStatus?.status}, data-diary=${project.diaryNumber}">
+                    data-program=${project.researchProgram}, data-status=${project.latestStatus?.status}, data-diary=${project.diaryNumber}, data-activity=${project.activity}">
                     <td class="my-project-name" th:text="${project.name}"></td>
                     <td th:text="${project.manager}"></td>
                     <td th:text="${project.latestStatus?.status}"></td>
@@ -247,6 +261,7 @@
             const selectedAcademies = getCheckedValues('.filter-academy').map(val => val.toLowerCase());
             const selectedPrograms = getCheckedValues('.filter-program').map(val => val.toLowerCase());
             const selectedYears = getCheckedValues('.filter-year').map(val => val.toLowerCase());
+            const selectedActivities = getCheckedValues('.filter-activity').map(val => val.toLowerCase());
             const search = document.getElementById("searchKeyword").value.toLowerCase();
 
             document.querySelectorAll("tbody tr").forEach(row => {
@@ -258,6 +273,7 @@
                 const academy = row.getAttribute("data-academy")?.toLowerCase() || "";
                 const program = row.getAttribute("data-program")?.toLowerCase() || "";
                 const diary = row.getAttribute("data-diary")?.toLowerCase() || "";
+                const activity = row.getAttribute("data-activity")?.toLowerCase() || "";
                 const name = row.querySelector("td:nth-child(1)").textContent.toLowerCase();
 
                 let activeYears = [];
@@ -277,7 +293,7 @@
                     (selectedFundings.length === 0 || selectedFundings.includes(funding)) &&
                     (selectedStatuses.length === 0 || selectedStatuses.includes(status)) &&
                     matchesAcademy &&
-                    (selectedPrograms.length === 0 || selectedPrograms.includes(program)) &&
+                    (selectedPrograms.length === 0 || selectedPrograms.includes(program)) && (selectedActivities.length === 0 || selectedActivities.includes(activity)) &&
                     (selectedYears.length === 0 || selectedYears.some(y => activeYears.includes(y))) &&
                     (name.includes(search) || manager.includes(search) || status.includes(search) ||
                         funding.includes(search) || academy.includes(search) || program.includes(search) || diary.includes(search))
@@ -308,8 +324,8 @@
 
                 rows.sort((a, b) => {
                     let aText = a.children[index].textContent
-                        .replace(/\u00a0/g, '') // ta bort &nbsp;
-                        .replace(/\s/g, '')     // ta bort alla mellanslag
+                        .replace(/\u00a0/g, '')
+                        .replace(/\s/g, '')
                         .trim();
 
                     let bText = b.children[index].textContent
@@ -340,7 +356,7 @@
         }
 
         // Eventbindningar
-        ['.filter-project-manager', '.filter-funding', '.filter-status', '.filter-academy', '.filter-program', '.filter-year'].forEach(selector => {
+        ['.filter-project-manager', '.filter-funding', '.filter-status', '.filter-academy', '.filter-program', '.filter-year', '.filter-activity'].forEach(selector => {
             document.querySelectorAll(selector).forEach(el => el.addEventListener('change', applyFilters));
         });
 
@@ -353,6 +369,8 @@
         bindSelectAllCheckbox("selectAllAcademies", "filter-academy");
         bindSelectAllCheckbox("selectAllPrograms", "filter-program");
         bindSelectAllCheckbox("selectAllYears", "filter-year");
+        bindSelectAllCheckbox("selectAllActivities", "filter-activity");
+
 
         document.getElementById("viewChart").addEventListener("click", function () {
             const params = new URLSearchParams();
@@ -362,6 +380,7 @@
             getCheckedValues(".filter-status").forEach(status => params.append("statuses", status));
             getCheckedValues(".filter-academy").forEach(academy => params.append("academies", academy));
             getCheckedValues(".filter-program").forEach(program => params.append("programs", program));
+            getCheckedValues(".filter-activity").forEach(act => params.append("activities", act));
             window.location.href = `/budget?${params.toString()}`;
         });
 
@@ -373,6 +392,8 @@
             getCheckedValues(".filter-status").forEach(status => params.append("statuses", status));
             getCheckedValues(".filter-academy").forEach(academy => params.append("academies", academy));
             getCheckedValues(".filter-program").forEach(program => params.append("programs", program));
+            getCheckedValues(".filter-activity").forEach(act => params.append("activities", act));
+
 
             const form = document.createElement("form");
             form.method = "POST";

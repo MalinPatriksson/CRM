@@ -116,6 +116,12 @@ public class ProjectController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
+        Set<String> activities = projects.stream()
+                .map(Project::getActivity)
+                .filter(s -> s != null && !s.trim().isEmpty())
+                .collect(Collectors.toSet());
+
+
         String formattedMinBudget = formatter.format(minBudget);
         String formattedMaxBudget = formatter.format(maxBudget);
 
@@ -130,6 +136,7 @@ public class ProjectController {
         model.addAttribute("maxBudget", maxBudget);
         model.addAttribute("formattedMinBudget", formattedMinBudget);
         model.addAttribute("formattedMaxBudget", formattedMaxBudget);
+        model.addAttribute("activities", activities);
 
         return "projects";
     }
@@ -145,6 +152,7 @@ public class ProjectController {
             @RequestParam String fundingSource,
             @RequestParam String researchProgram,
             @RequestParam String diaryNumber,
+            @RequestParam("activity") String activity,
             @RequestParam(name = "academies", required = false) List<String> academies,
             @RequestParam Map<String, String> budgetRows,
             @RequestParam String status,
@@ -153,7 +161,6 @@ public class ProjectController {
             @RequestParam(required = false) Integer weighting,
             RedirectAttributes redirectAttributes) {
 
-        System.out.println("📌 Hanterar projekt: " + (id != null ? "Uppdatering" : "Ny skapelse"));
 
         Project project = (id != null) ? projectService.getProjectById(id) : new Project();
 
@@ -167,6 +174,7 @@ public class ProjectController {
         project.setAcademies(academies);
         project.setExpectedResponseDate(expectedResponseDate);
         project.setStatusDate(statusDate);
+        project.setActivity(activity);
 
         if (project.getCurrentStatus() == null || project.getCurrentStatus().isEmpty()) {
             project.setCurrentStatus(status);
@@ -245,6 +253,7 @@ public class ProjectController {
             @RequestParam String fundingSource,
             @RequestParam String researchProgram,
             @RequestParam String diaryNumber,
+            @RequestParam("activity") String activity,
             @RequestParam(name = "academies", required = false) List<String> academies,
             @RequestParam Map<String, String> budgetRows,
             @RequestParam String status,
@@ -267,6 +276,7 @@ public class ProjectController {
         project.setAcademies(academies);
         project.setExpectedResponseDate(expectedResponseDate);
         project.setStatusDate(statusDate);
+        project.setActivity(activity);
 
         if (project.getCurrentStatus() == null || project.getCurrentStatus().isEmpty()) {
             project.setCurrentStatus(status);
@@ -355,6 +365,7 @@ public class ProjectController {
             model.addAttribute("statusHistory", projectStatusService.getStatusHistory(projectId));
             Integer weighting = (currentStatus != null) ? currentStatus.getWeighting() : 0;
             model.addAttribute("currentStatusWeighting", weighting);
+            model.addAttribute("activity", project.getActivity());
 
 
             return "edit-project";

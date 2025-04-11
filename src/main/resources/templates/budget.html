@@ -86,6 +86,19 @@
                     </li>
                 </ul>
             </div>
+            <!-- Verksamhet -->
+            <div class="dropdown">
+                <button class="btn btn-light dropdown-toggle" type="button" id="filterActivityBtn" data-bs-toggle="dropdown">Välj verksamhet</button>
+                <ul class="dropdown-menu" aria-labelledby="filterActivityBtn">
+                    <li><label class="dropdown-item"><input type="checkbox" id="selectAllActivities" data-select-class="filter-activity" class="me-2"> Alla</label></li>
+                    <li th:each="activity : ${activities}">
+                        <label class="dropdown-item">
+                            <input type="checkbox" name="activities" class="activity-checkbox me-2" th:value="${activity}" th:checked="${selectedActivities.contains(activity)}">
+                            <span th:text="${activity}"></span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
 
             <!-- STATUS -->
             <div class="dropdown">
@@ -141,6 +154,7 @@
                 document.querySelectorAll("input[name='statuses']:checked").forEach(cb => params.append("statuses", cb.value));
                 document.querySelectorAll("input[name='academies']:checked").forEach(cb => params.append("academies", cb.value));
                 document.querySelectorAll("input[name='programs']:checked").forEach(cb => params.append("programs", cb.value));
+                document.querySelectorAll("input[name='activities']:checked").forEach(cb => params.append("activities", cb.value));
                 const weighted = document.getElementById("weightedCheckbox").checked;
                 params.append("weighted", weighted);
                 return params.toString();
@@ -190,7 +204,9 @@
                             { name: "academies", label: "Akademier", allId: "selectAllAcademies" },
                             { name: "programs", label: "Program", allId: "selectAllPrograms" },
                             { name: "statuses", label: "Status", allId: "selectAllStatus" },
-                            { name: "years", label: "År", allId: "selectAllYears" }
+                            { name: "years", label: "År", allId: "selectAllYears" },
+                            { name: "activities", label: "Verksamhet", allId: "selectAllActivities" },
+
                         ];
 
                         filters.forEach(f => {
@@ -243,6 +259,7 @@
             handleSelectAll("selectAllStatus", "status-checkbox");
             handleSelectAll("selectAllAcademies", "academy-checkbox");
             handleSelectAll("selectAllPrograms", "program-checkbox");
+            handleSelectAll("selectAllActivities", "activity-checkbox");
 
             document.getElementById("applyFilters").addEventListener("click", triggerFilters);
             document.getElementById("resetFilters").addEventListener("click", () => {
